@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(uuid())
+  name      String?
+  email     String     @unique
+  password  String
+  role      Role       @default(USER)
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  orders    Order[]
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  userId          String
+  status          OrderStatus @default(PENDING)
+  totalPrice      Decimal
+  shippingName    String
+  shippingEmail   String
+  shippingPhone   String
+  shippingAddress String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  paymentMethod   String      @default("cod")
+  user            User        @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+}
+
+model OrderItem {
+  id           String  @id @default(uuid())
+  orderId      String
+  productId    String
+  productTitle String
+  quantity     Int
+  price        Decimal
+  image        String?
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model SeoSetting {
+  id              String   @id @default(uuid())
+  siteTitle       String?
+  siteName        String?
+  metadescription String?
+  metaKeywords    String?
+  metaImage       String?
+  favicon         String?
+  gtmId           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model HeaderSetting {
+  id         String   @id @default(uuid())
+  headerText String?
+  headerLogo String?
+  emailLogo  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  siteName   String?
+}
+
+model SiteSetting {
+  id             String   @id @default(uuid())
+  about          String?
+  mission        String?
+  vision         String?
+  contactPhone   String?
+  contactEmail   String?
+  contactAddress String?
+  facebookUrl    String?
+  twitterUrl     String?
+  instagramUrl   String?
+  linkedinUrl    String?
+  currency       String   @default("RWF")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Category {
+  id           String    @id @default(uuid())
+  title        String
+  slug         String    @unique
+  image        String?
+  description  String?
+  productCount Int       @default(0)
+  postCount    Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  products     Product[]
+}
+
+model Product {
+  id                    String                  @id @default(uuid())
+  title                 String
+  shortDescription      String?
+  description           String?
+  body                  String?
+  slug                  String                  @unique
+  price                 Decimal
+  discountedPrice       Decimal?
+  quantity              Int
+  isNewArrival          Boolean                 @default(false)
+  sku                   String?
+  tags                  String[]                @default([])
+  offers                String[]                @default([])
+  categoryId            String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  images                String[]                @default([])
+  additionalInformation AdditionalInformation[]
+  countdowns            Countdown[]
+  customAttributes      CustomAttribute[]
+  heroBanners           HeroBanner[]
+  heroSliders           HeroSlider[]
+  category              Category?               @relation(fields: [categoryId], references: [id])
+  productVariants       ProductVariant[]
+  reviews               Review[]
+}
+
+model ProductVariant {
+  id        String  @id @default(uuid())
+  productId String
+  image     String
+  color     String?
+  size      String?
+  isDefault Boolean @default(false)
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model AdditionalInformation {
+  id          String  @id @default(uuid())
+  productId   String
+  name        String
+  description String?
+  product     Product @relation(fields: [productId], references: [id])
+}
+
+model CustomAttribute {
+  id              String           @id @default(uuid())
+  productId       String
+  attributeName   String
+  attributeValues AttributeValue[]
+  product         Product          @relation(fields: [productId], references: [id])
+}
+
+model AttributeValue {
+  id                String          @id @default(uuid())
+  title             String
+  customAttributeId String
+  customAttribute   CustomAttribute @relation(fields: [customAttributeId], references: [id])
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  productSlug String
+  name        String
+  email       String
+  comment     String
+  ratings     Int
+  isApproved  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  product     Product  @relation(fields: [productSlug], references: [slug])
+}
+
+model HeroBanner {
+  id          Int      @id @default(autoincrement())
+  bannerName  String?
+  bannerImage String
+  slug        String   @unique
+  productId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  subtitle    String?
+  product     Product  @relation(fields: [productId], references: [id])
+}
+
+model HeroSlider {
+  id           Int      @id @default(autoincrement())
+  sliderName   String
+  sliderImage  String
+  discountRate Int
+  slug         String   @unique
+  productId    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  product      Product  @relation(fields: [productId], references: [id])
+}
+
+model Countdown {
+  id             Int      @id @default(autoincrement())
+  title          String
+  subtitle       String
+  countdownImage String?
+  date           String
+  productId      String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  product        Product  @relation(fields: [productId], references: [id])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  FROZEN
+}
+
+enum OrderStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
