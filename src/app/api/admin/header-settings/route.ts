@@ -5,239 +5,162 @@ import { authOptions } from "@/lib/auth";
 import cloudinary from "@/lib/cloudinary";
 import { revalidateTag } from "next/cache";
 
-
 export const runtime = "nodejs";
 
 
-// GET SETTINGS
-export async function GET(){
+// GET HEADER SETTINGS
+export async function GET() {
+  try {
+    let settings = await prisma.headerSetting.findFirst();
 
-try{
+    if (!settings) {
+      settings = await prisma.headerSetting.create({
+        data: {},
+      });
+    }
 
+    return NextResponse.json({
+      success: true,
+      settings,
+    });
 
-const settings =
-await prisma.headerSetting.findFirst();
+  } catch (error: any) {
 
+    console.error("GET HEADER SETTINGS ERROR:", error);
 
-return NextResponse.json({
-success:true,
-settings
-});
-
-
-}catch(error:any){
-
-console.log(error);
-
-return NextResponse.json(
-{
-success:false,
-message:error.message
-},
-{
-status:500
-}
-);
-
-}
-
+    return NextResponse.json(
+      {
+        success: false,
+        message: error.message || "Failed to fetch settings",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
 }
 
 
+// UPDATE HEADER SETTINGS
+export async function PUT(request: NextRequest) {
+  try {
 
+    const session = await getServerSession(authOptions);
 
+    if (!session?.user || session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Unauthorized",
+        },
+        {
+          status: 403,
+        }
+      );
+    }
 
-// UPDATE SETTINGS
+    const formData = await request.formData();
 
-export async function PUT(
-request:NextRequest
-){
+    const siteName = formData.get("siteName")?.toString() ?? "";
+    const headerText = formData.get("headerText")?.toString() ?? "";
+    const removeLogo = formData.get("removeLogo")?.toString() === "true";
 
-try{
+    let logoUrl: string | undefined;
 
+    const logo = formData.get("headerLogo");
 
-const session =
-await getServerSession(authOptions);
+    // Upload new logo
+    if (logo instanceof File && logo.size > 0) {
 
+      const buffer = Buffer.from(
+        await logo.arrayBuffer()
+      );
 
-if(!session?.user || session.user.role !== "ADMIN"){
+      const uploaded: any = await new Promise((resolve, reject) => {
 
-return NextResponse.json(
-{
-message:"Unauthorized"
-},
-{
-status:403
-}
-);
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "roxytech/header",
+          },
+          (error, result) => {
 
-}
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result);
+            }
 
+          }
+        );
 
+        stream.end(buffer);
 
-const formData =
-await request.formData();
+      });
 
+      logoUrl = uploaded.secure_url;
 
+    }
 
-const siteName =
-formData.get("siteName")?.toString();
+    let settings = await prisma.headerSetting.findFirst();
 
+    if (!settings) {
 
-const headerText =
-formData.get("headerText")?.toString();
+      settings = await prisma.headerSetting.create({
+        data: {
+          siteName,
+          headerText,
+          headerLogo: removeLogo ? null : logoUrl,
+        },
+      });
 
+    } else {
 
+      settings = await prisma.headerSetting.update({
 
-let logoUrl;
+        where: {
+          id: settings.id,
+        },
 
+        data: {
 
+          siteName,
 
-const logo =
-formData.get("headerLogo");
+          headerText,
 
+          ...(removeLogo
+            ? { headerLogo: null }
+            : logoUrl
+            ? { headerLogo: logoUrl }
+            : {}),
 
+        },
 
-if(
-logo instanceof File &&
-logo.size > 0
-){
+      });
 
+    }
 
-
-const buffer =
-Buffer.from(
-await logo.arrayBuffer()
-);
-
-
-
-const upload =
-await new Promise<any>(
-(resolve,reject)=>{
-
-
-cloudinary.uploader.upload_stream(
-{
-folder:"roxytech/header"
-},
-(error,result)=>{
-
-if(error)
-reject(error);
-
-else
-resolve(result);
-
-}
-)
-.end(buffer);
-
-
-
-});
-
-
-logoUrl =
-upload.secure_url;
-
-
-}
-
-
-
-
-
-const old =
-await prisma.headerSetting.findFirst();
-
-
-
-const settings =
-old
-
-?
-
-await prisma.headerSetting.update({
-
-where:{
-id:old.id
-},
-
-data:{
-
-...(siteName && {
-siteName
-}),
-
-
-...(headerText && {
-headerText
-}),
-
-
-...(logoUrl && {
-headerLogo:logoUrl
-})
-
-
-}
-
-})
-
-
-:
-
-
-await prisma.headerSetting.create({
-
-data:{
-
-siteName,
-headerText,
-headerLogo:logoUrl
-
-}
-
-});
-
-
-
-revalidateTag("header-setting");
-
-
-
-return NextResponse.json({
-
-success:true,
-settings
-
-});
-
-
-
-}catch(error:any){
-
-
-console.log(
-"HEADER UPDATE ERROR:",
-error
-);
-
-
-
-return NextResponse.json(
-{
-success:false,
-message:error.message
-},
-{
-status:500
-}
-);
-
-
-}
-
-
+    revalidateTag("header-setting", "max");
+    revalidateTag("header-logo", "max");
+    revalidateTag("site-name", "max");
+
+    return NextResponse.json({
+      success: true,
+      settings,
+    });
+
+  } catch (error: any) {
+
+    console.error("HEADER SETTINGS UPDATE ERROR:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: error.message || "Failed to update settings",
+      },
+      {
+        status: 500,
+      }
+    );
+
+  }
 }
