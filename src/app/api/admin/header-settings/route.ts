@@ -2,76 +2,242 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prismaDB";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { promises as fs } from "fs";
-import path from "path";
+import cloudinary from "@/lib/cloudinary";
 import { revalidateTag } from "next/cache";
+
 
 export const runtime = "nodejs";
 
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ success: false, message: "Access denied" }, { status: 403 });
-    }
-    let settings = await prisma.headerSetting.findFirst();
-    if (!settings) settings = await prisma.headerSetting.create({ data: {} });
-    return NextResponse.json({ success: true, settings });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error?.message }, { status: 500 });
-  }
+
+// GET SETTINGS
+export async function GET(){
+
+try{
+
+
+const settings =
+await prisma.headerSetting.findFirst();
+
+
+return NextResponse.json({
+success:true,
+settings
+});
+
+
+}catch(error:any){
+
+console.log(error);
+
+return NextResponse.json(
+{
+success:false,
+message:error.message
+},
+{
+status:500
+}
+);
+
 }
 
-export async function PUT(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ success: false, message: "Access denied" }, { status: 403 });
-    }
+}
 
-    const contentType = request.headers.get("content-type") || "";
-    const updateData: Record<string, any> = {};
 
-    if (contentType.includes("multipart/form-data")) {
-      const formData = await request.formData();
 
-      const siteName = formData.get("siteName")?.toString();
-      const headerText = formData.get("headerText")?.toString();
-      const removeLogo = formData.get("removeLogo")?.toString();
 
-      if (siteName !== undefined) updateData.siteName = siteName;
-      if (headerText !== undefined) updateData.headerText = headerText;
-      if (removeLogo === "true") updateData.headerLogo = null;
 
-      const logoFile = formData.get("headerLogo");
-      if (logoFile instanceof File && logoFile.size > 0) {
-        const uploadDir = path.join(process.cwd(), "public", "uploads", "logo");
-        await fs.mkdir(uploadDir, { recursive: true });
-        const ext = path.extname(logoFile.name || ".png") || ".png";
-        const safeName = `logo-${Date.now()}${ext}`;
-        const filePath = path.join(uploadDir, safeName);
-        await fs.writeFile(filePath, Buffer.from(await logoFile.arrayBuffer()));
-        updateData.headerLogo = `/uploads/logo/${safeName}`;
-      }
-    } else {
-      const body = await request.json();
-      if (body.siteName !== undefined) updateData.siteName = body.siteName;
-      if (body.headerText !== undefined) updateData.headerText = body.headerText;
-      if (body.removeLogo === true) updateData.headerLogo = null;
-    }
+// UPDATE SETTINGS
 
-    const existing = await prisma.headerSetting.findFirst();
-    const settings = existing
-      ? await prisma.headerSetting.update({ where: { id: existing.id }, data: updateData })
-      : await prisma.headerSetting.create({ data: updateData });
+export async function PUT(
+request:NextRequest
+){
 
-    // Bust cached getters so the storefront header reflects the new logo/name immediately
-    revalidateTag("header-setting", "max");
-    revalidateTag("header-logo", "max");
-    revalidateTag("site-name", "max");
+try{
 
-    return NextResponse.json({ success: true, settings });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error?.message }, { status: 500 });
-  }
+
+const session =
+await getServerSession(authOptions);
+
+
+if(!session?.user || session.user.role !== "ADMIN"){
+
+return NextResponse.json(
+{
+message:"Unauthorized"
+},
+{
+status:403
+}
+);
+
+}
+
+
+
+const formData =
+await request.formData();
+
+
+
+const siteName =
+formData.get("siteName")?.toString();
+
+
+const headerText =
+formData.get("headerText")?.toString();
+
+
+
+let logoUrl;
+
+
+
+const logo =
+formData.get("headerLogo");
+
+
+
+if(
+logo instanceof File &&
+logo.size > 0
+){
+
+
+
+const buffer =
+Buffer.from(
+await logo.arrayBuffer()
+);
+
+
+
+const upload =
+await new Promise<any>(
+(resolve,reject)=>{
+
+
+cloudinary.uploader.upload_stream(
+{
+folder:"roxytech/header"
+},
+(error,result)=>{
+
+if(error)
+reject(error);
+
+else
+resolve(result);
+
+}
+)
+.end(buffer);
+
+
+
+});
+
+
+logoUrl =
+upload.secure_url;
+
+
+}
+
+
+
+
+
+const old =
+await prisma.headerSetting.findFirst();
+
+
+
+const settings =
+old
+
+?
+
+await prisma.headerSetting.update({
+
+where:{
+id:old.id
+},
+
+data:{
+
+...(siteName && {
+siteName
+}),
+
+
+...(headerText && {
+headerText
+}),
+
+
+...(logoUrl && {
+headerLogo:logoUrl
+})
+
+
+}
+
+})
+
+
+:
+
+
+await prisma.headerSetting.create({
+
+data:{
+
+siteName,
+headerText,
+headerLogo:logoUrl
+
+}
+
+});
+
+
+
+revalidateTag("header-setting");
+
+
+
+return NextResponse.json({
+
+success:true,
+settings
+
+});
+
+
+
+}catch(error:any){
+
+
+console.log(
+"HEADER UPDATE ERROR:",
+error
+);
+
+
+
+return NextResponse.json(
+{
+success:false,
+message:error.message
+},
+{
+status:500
+}
+);
+
+
+}
+
+
 }
