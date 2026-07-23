@@ -2,145 +2,711 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaClientInstance } from "@/lib/prismaDB";
+import { revalidateTag } from "next/cache";
 import { promises as fs } from "fs";
 import path from "path";
-import { revalidateTag } from "next/cache";
+
 
 export const runtime = "nodejs";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const product = await prismaClientInstance.product.findUnique({ where: { id } });
-  if (!product) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(product);
-}
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
 
-  const { id } = await params;
-  const contentType = req.headers.get("content-type") || "";
+// ==========================
+// GET SINGLE PRODUCT
+// ==========================
 
-  let title: string | undefined;
-  let slug: string | undefined;
-  let price: string | undefined;
-  let discountedPrice: string | null | undefined;
-  let quantity: number | undefined;
-  let categoryId: string | null | undefined;
-  let description: string | null | undefined;
-  let shortDescription: string | null | undefined;
-  let isNewArrival: boolean | undefined;
-  // images that the user kept from the existing set
-  let keptImages: string[] = [];
-  // newly uploaded image paths
-  let newImagePaths: string[] = [];
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id:string }> }
+){
 
-  if (contentType.includes("multipart/form-data")) {
-    const formData = await req.formData();
-    title = formData.get("title")?.toString() || undefined;
-    slug = formData.get("slug")?.toString() || undefined;
-    price = formData.get("price")?.toString() || undefined;
+  try {
 
-    const rawDiscounted = formData.get("discountedPrice")?.toString() ?? "";
-    discountedPrice = rawDiscounted.trim() !== "" ? rawDiscounted : null;
+    const {id} = await params;
 
-    quantity = Number(formData.get("quantity")?.toString() ?? 0);
-    categoryId = formData.get("categoryId")?.toString() || undefined;
-    description = formData.get("description")?.toString() ?? null;
-    shortDescription = formData.get("shortDescription")?.toString() ?? null;
-    const rawNewArrival = formData.get("isNewArrival")?.toString();
-    if (rawNewArrival !== undefined) isNewArrival = rawNewArrival === "true";
 
-    // Existing images the user chose to keep
-    const existingImagesRaw = formData.get("existingImages")?.toString();
-    if (existingImagesRaw) {
-      try {
-        keptImages = JSON.parse(existingImagesRaw).filter(Boolean);
-      } catch {
-        keptImages = [];
-      }
+    const product =
+      await prismaClientInstance.product.findUnique({
+
+        where:{
+          id
+        },
+
+        include:{
+          category:true,
+          productVariants:true,
+          reviews:true
+        }
+
+      });
+
+
+
+    if(!product){
+
+      return NextResponse.json(
+        {
+          error:"Product not found"
+        },
+        {
+          status:404
+        }
+      );
+
     }
 
-    // New files
-    const files = formData.getAll("images").filter((v): v is File => v instanceof File && v.size > 0);
-    if (files.length > 0) {
-      const uploadDir = path.join(process.cwd(), "public", "uploads", "products");
-      await fs.mkdir(uploadDir, { recursive: true });
-      for (const file of files) {
-        const ext = path.extname(file.name || ".jpg") || ".jpg";
-        const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
-        const filePath = path.join(uploadDir, safeName);
-        await fs.writeFile(filePath, Buffer.from(await file.arrayBuffer()));
-        newImagePaths.push(`/uploads/products/${safeName}`);
+
+
+    return NextResponse.json(product);
+
+
+
+  }catch(error){
+
+    console.error(
+      "GET PRODUCT ERROR",
+      error
+    );
+
+
+    return NextResponse.json(
+      {
+        error:"Failed fetching product"
+      },
+      {
+        status:500
       }
-    }
-  } else {
-    const body = await req.json();
-    title = body.title;
-    slug = body.slug;
-    price = body.price;
-    discountedPrice = body.discountedPrice ?? null;
-    quantity = body.quantity;
-    categoryId = body.categoryId;
-    description = body.description ?? null;
-    shortDescription = body.shortDescription ?? null;
-    if (body.isNewArrival !== undefined) isNewArrival = body.isNewArrival === true || body.isNewArrival === "true";
-    keptImages = Array.isArray(body.existingImages) ? body.existingImages.filter(Boolean) : [];
-    newImagePaths = Array.isArray(body.images) ? body.images.filter(Boolean) : [];
+    );
+
   }
 
-  // Merge kept + new images; only update the images column if the client sent existingImages
-  const mergedImages = [...keptImages, ...newImagePaths];
-
-  const updated = await prismaClientInstance.product.update({
-    where: { id },
-    data: {
-      ...(title !== undefined && { title }),
-      ...(slug !== undefined && { slug }),
-      ...(price !== undefined && { price: String(price) }),
-      ...(discountedPrice !== undefined && { discountedPrice: discountedPrice ? String(discountedPrice) : null }),
-      ...(quantity !== undefined && { quantity }),
-      ...(categoryId !== undefined && { categoryId: categoryId || null }),
-      ...(description !== undefined && { description }),
-      ...(shortDescription !== undefined && { shortDescription }),
-      ...(isNewArrival !== undefined && { isNewArrival }),
-      // Always update images if mergedImages was derived from client input
-      images: mergedImages,
-    },
-  });
-
-  // Also update productVariants to match new images so the homepage sees changes
-  if (mergedImages.length > 0) {
-    // Delete old variants and recreate from the merged image set
-    await prismaClientInstance.productVariant.deleteMany({ where: { productId: id } });
-    await prismaClientInstance.productVariant.createMany({
-      data: mergedImages.map((image, index) => ({
-        productId: id,
-        image,
-        color: null,
-        size: null,
-        isDefault: index === 0,
-      })),
-    });
-  }
-
-  // Bust the Next.js cache so the homepage/shop reflects changes immediately
-  revalidateTag("products", "max");
-
-  return NextResponse.json({ ...updated, price: updated.price.toString(), discountedPrice: updated.discountedPrice?.toString() ?? null });
 }
 
-export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
 
-  const { id } = await params;
-  await prismaClientInstance.product.delete({ where: { id } });
-  revalidateTag("products", "max");
-  return new NextResponse(null, { status: 204 });
+
+
+
+
+
+
+// ==========================
+// UPDATE PRODUCT
+// ==========================
+
+export async function PATCH(
+  req:Request,
+  {params}:{params:Promise<{id:string}>}
+){
+
+
+try{
+
+
+const session =
+await getServerSession(authOptions);
+
+
+
+if(!session?.user || session.user.role !== "ADMIN"){
+
+return NextResponse.json(
+{
+error:"Unauthorized"
+},
+{
+status:403
+}
+);
+
+}
+
+
+
+const {id}=await params;
+
+
+
+const contentType =
+req.headers.get("content-type") || "";
+
+
+
+let updateData:any={};
+
+
+
+
+// ==========================
+// FORM DATA (WITH IMAGES)
+// ==========================
+
+
+if(contentType.includes("multipart/form-data")){
+
+
+const formData =
+await req.formData();
+
+
+
+updateData.title =
+formData.get("title")?.toString();
+
+
+
+updateData.slug =
+formData.get("slug")?.toString();
+
+
+
+updateData.price =
+formData.get("price")?.toString();
+
+
+
+updateData.discountedPrice =
+formData.get("discountedPrice")
+?.toString() || null;
+
+
+
+updateData.quantity =
+Number(
+formData.get("quantity") || 0
+);
+
+
+
+updateData.categoryId =
+formData.get("categoryId")
+?.toString() || null;
+
+
+
+updateData.description =
+formData.get("description")
+?.toString() || null;
+
+
+
+updateData.shortDescription =
+formData.get("shortDescription")
+?.toString() || null;
+
+
+
+updateData.isNewArrival =
+formData.get("isNewArrival")
+==="true";
+
+
+
+
+// IMAGE UPLOAD
+
+const files =
+formData
+.getAll("images")
+.filter(
+(file):file is File =>
+file instanceof File &&
+file.size > 0
+);
+
+
+
+if(files.length){
+
+
+const uploadedImages:string[]=[];
+
+
+const uploadDir =
+path.join(
+process.cwd(),
+"public/uploads/products"
+);
+
+
+
+await fs.mkdir(
+uploadDir,
+{
+recursive:true
+}
+);
+
+
+
+for(const file of files){
+
+
+const filename =
+`${Date.now()}-${file.name.replace(/\s+/g,"-")}`;
+
+
+
+const filePath =
+path.join(
+uploadDir,
+filename
+);
+
+
+
+const buffer =
+Buffer.from(
+await file.arrayBuffer()
+);
+
+
+
+await fs.writeFile(
+filePath,
+buffer
+);
+
+
+
+uploadedImages.push(
+`/uploads/products/${filename}`
+);
+
+
+}
+
+
+
+updateData.images =
+uploadedImages;
+
+
+}
+
+
+
+
+}
+
+
+
+
+// ==========================
+// JSON UPDATE
+// ==========================
+
+
+else{
+
+
+updateData =
+await req.json();
+
+
+}
+
+
+
+
+
+
+const updated =
+await prismaClientInstance.product.update({
+
+where:{
+id
+},
+
+
+data:{
+
+
+
+...(updateData.title && {
+
+title:updateData.title
+
+}),
+
+
+
+
+...(updateData.slug && {
+
+slug:updateData.slug
+
+}),
+
+
+
+
+...(updateData.price !== undefined && {
+
+price:String(updateData.price)
+
+}),
+
+
+
+
+...(updateData.discountedPrice !== undefined && {
+
+discountedPrice:
+updateData.discountedPrice
+? String(updateData.discountedPrice)
+:null
+
+}),
+
+
+
+
+...(updateData.quantity !== undefined && {
+
+quantity:Number(updateData.quantity)
+
+}),
+
+
+
+
+...(updateData.categoryId !== undefined && {
+
+categoryId:updateData.categoryId
+
+}),
+
+
+
+
+...(updateData.description !== undefined && {
+
+description:updateData.description
+
+}),
+
+
+
+
+...(updateData.shortDescription !== undefined && {
+
+shortDescription:updateData.shortDescription
+
+}),
+
+
+
+
+...(updateData.isNewArrival !== undefined && {
+
+isNewArrival:updateData.isNewArrival
+
+}),
+
+
+
+
+...(updateData.images && {
+
+images:updateData.images
+
+})
+
+
+
+}
+
+
+});
+
+
+
+
+
+// Update variants if images changed
+
+if(updateData.images){
+
+
+await prismaClientInstance.productVariant.deleteMany({
+
+where:{
+productId:id
+}
+
+});
+
+
+
+await prismaClientInstance.productVariant.createMany({
+
+data:
+updateData.images.map(
+(image:string,index:number)=>({
+
+productId:id,
+
+image,
+
+color:null,
+
+size:null,
+
+isDefault:index===0
+
+})
+)
+
+});
+
+
+}
+
+
+
+
+revalidateTag(
+"products",
+"max"
+);
+
+
+
+return NextResponse.json(updated);
+
+
+
+}catch(error:any){
+
+
+console.error(
+"UPDATE PRODUCT ERROR",
+error
+);
+
+
+
+return NextResponse.json(
+
+{
+error:
+error.message ||
+"Update failed"
+},
+
+{
+status:500
+}
+
+);
+
+
+}
+
+
+}
+
+
+
+
+
+
+
+
+
+// ==========================
+// DELETE PRODUCT
+// ==========================
+
+
+export async function DELETE(
+ _req:Request,
+ {params}:{params:Promise<{id:string}>}
+){
+
+
+try{
+
+
+const session =
+await getServerSession(authOptions);
+
+
+
+if(!session?.user || session.user.role !== "ADMIN"){
+
+
+return NextResponse.json(
+{
+error:"Unauthorized"
+},
+{
+status:403
+}
+);
+
+
+}
+
+
+
+const {id}=await params;
+
+
+
+const product =
+await prismaClientInstance.product.findUnique({
+
+where:{
+id
+}
+
+});
+
+
+
+if(!product){
+
+
+return NextResponse.json(
+{
+error:"Product not found"
+},
+{
+status:404
+}
+);
+
+
+}
+
+
+
+
+
+
+await prismaClientInstance.$transaction(
+async(tx)=>{
+
+
+// remove variants
+
+await tx.productVariant.deleteMany({
+
+where:{
+productId:id
+}
+
+});
+
+
+
+// remove reviews
+
+await tx.review.deleteMany({
+
+where:{
+productSlug:product.slug
+}
+
+});
+
+
+
+// remove other relations if existing
+
+await tx.heroBanner.deleteMany({
+
+where:{
+productId:id
+}
+
+});
+
+
+await tx.heroSlider.deleteMany({
+
+where:{
+productId:id
+}
+
+});
+
+
+await tx.countdown.deleteMany({
+
+where:{
+productId:id
+}
+
+});
+
+
+await tx.additionalInformation.deleteMany({
+
+where:{
+productId:id
+}
+
+});
+
+
+
+await tx.product.delete({
+
+where:{
+id
+}
+
+});
+
+
+}
+
+);
+
+
+
+
+
+revalidateTag(
+"products",
+"max"
+);
+
+
+
+return NextResponse.json(
+{
+message:"Product deleted successfully"
+}
+);
+
+
+
+}catch(error:any){
+
+
+console.error(
+"DELETE PRODUCT ERROR",
+error
+);
+
+
+
+return NextResponse.json(
+{
+error:
+error.message ||
+"Delete failed"
+},
+{
+status:500
+}
+);
+
+
+}
+
+
 }
