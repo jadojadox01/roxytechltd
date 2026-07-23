@@ -1,241 +1,133 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prismaDB";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { revalidateTag } from "next/cache";
+
+import { prisma } from "@/lib/prismaDB";
+import { authOptions } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
-
-// GET SETTINGS
-// Public access (homepage/footer/about page need this)
+// ======================================================
+// GET SITE SETTINGS (PUBLIC)
+// ======================================================
 export async function GET() {
   try {
-
     let settings = await prisma.siteSetting.findFirst();
 
-
+    // Create default settings if none exist
     if (!settings) {
-
       settings = await prisma.siteSetting.create({
         data: {
           currency: "RWF",
         },
       });
-
     }
-
 
     return NextResponse.json({
       success: true,
       settings,
     });
-
-
   } catch (error: any) {
-
-    console.error(
-      "GET SITE SETTINGS ERROR:",
-      error
-    );
-
+    console.error("GET SITE SETTINGS ERROR:", error);
 
     return NextResponse.json(
       {
-        success:false,
-        message:error.message || "Failed to fetch settings",
+        success: false,
+        message: error?.message || "Failed to fetch site settings",
       },
       {
-        status:500,
+        status: 500,
       }
     );
-
   }
 }
 
-
-
-
-
-// UPDATE SETTINGS
-// Admin only
-export async function PUT(
-  request: NextRequest
-) {
-
+// ======================================================
+// UPDATE SITE SETTINGS (ADMIN ONLY)
+// ======================================================
+export async function PUT(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await getServerSession(authOptions);
 
-
-    const session =
-      await getServerSession(authOptions);
-
-
-
-    if (
-      !session?.user ||
-      session.user.role !== "ADMIN"
-    ) {
-
+    if (!session?.user || session.user.role !== "ADMIN") {
       return NextResponse.json(
         {
-          success:false,
-          message:"Access denied",
+          success: false,
+          message: "Access denied",
         },
         {
-          status:403,
+          status: 403,
         }
       );
-
     }
 
-
-
-    const body =
-      await request.json();
-
-
+    // Parse request body
+    const body = await request.json();
 
     const {
-
       about,
       mission,
       vision,
-
       contactPhone,
       contactEmail,
       contactAddress,
-
       facebookUrl,
       twitterUrl,
       instagramUrl,
       linkedinUrl,
-
       currency,
-
-
     } = body;
 
+    // Find existing settings
+    let settings = await prisma.siteSetting.findFirst();
 
+    const data = {
+      about: about ?? null,
+      mission: mission ?? null,
+      vision: vision ?? null,
+      contactPhone: contactPhone ?? null,
+      contactEmail: contactEmail ?? null,
+      contactAddress: contactAddress ?? null,
+      facebookUrl: facebookUrl ?? null,
+      twitterUrl: twitterUrl ?? null,
+      instagramUrl: instagramUrl ?? null,
+      linkedinUrl: linkedinUrl ?? null,
+      currency: currency || "RWF",
+    };
 
-
-    let settings =
-      await prisma.siteSetting.findFirst();
-
-
-
-
+    // Create or update
     if (!settings) {
-
-
-      settings =
-        await prisma.siteSetting.create({
-
-          data:{
-
-            about,
-            mission,
-            vision,
-
-            contactPhone,
-            contactEmail,
-            contactAddress,
-
-            facebookUrl,
-            twitterUrl,
-            instagramUrl,
-            linkedinUrl,
-
-            currency:
-              currency || "RWF",
-
-          }
-
-        });
-
-
-
+      settings = await prisma.siteSetting.create({
+        data,
+      });
     } else {
-
-
-
-      settings =
-        await prisma.siteSetting.update({
-
-          where:{
-            id:settings.id,
-          },
-
-
-          data:{
-
-
-            about,
-            mission,
-            vision,
-
-            contactPhone,
-            contactEmail,
-            contactAddress,
-
-            facebookUrl,
-            twitterUrl,
-            instagramUrl,
-            linkedinUrl,
-
-
-            currency:
-              currency || "RWF",
-
-
-          }
-
-
-        });
-
-
-
+      settings = await prisma.siteSetting.update({
+        where: {
+          id: settings.id,
+        },
+        data,
+      });
     }
 
-
-
-    // refresh website data
-    revalidateTag(
-      "site-settings"
-    );
-
-
+    // Refresh cached pages/components
+    revalidateTag("site-settings", "max");
 
     return NextResponse.json({
-
-      success:true,
+      success: true,
       settings,
-
     });
-
-
-
-  } catch(error:any){
-
-
-    console.error(
-      "UPDATE SITE SETTINGS ERROR:",
-      error
-    );
-
+  } catch (error: any) {
+    console.error("UPDATE SITE SETTINGS ERROR:", error);
 
     return NextResponse.json(
       {
-        success:false,
-        message:
-          error.message ||
-          "Failed to update settings",
+        success: false,
+        message: error?.message || "Failed to update site settings",
       },
       {
-        status:500,
+        status: 500,
       }
     );
-
-
   }
-
 }
