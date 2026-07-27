@@ -17,6 +17,12 @@ type SiteSettings = {
   instagramUrl: string | null;
   linkedinUrl: string | null;
   currency: string;
+  momoPhone: string | null;
+  momoAccountName: string | null;
+  momoEnabled: boolean;
+  bankCardsEnabled: boolean;
+  bankCardsMessage: string | null;
+  codEnabled: boolean;
 };
 
 type HeaderSettings = {
@@ -48,6 +54,12 @@ export default function AdminSettingsClient() {
     instagramUrl: "",
     linkedinUrl: "",
     currency: "RWF",
+    momoPhone: "0783428632",
+    momoAccountName: "Grace NKURIKIYINKA",
+    momoEnabled: true,
+    bankCardsEnabled: false,
+    bankCardsMessage: "Coming soon",
+    codEnabled: true,
   });
 
   // ── Header / branding settings ──────────────────────────────────
@@ -97,6 +109,12 @@ export default function AdminSettingsClient() {
           instagramUrl: data.settings.instagramUrl || "",
           linkedinUrl: data.settings.linkedinUrl || "",
           currency: data.settings.currency || "RWF",
+          momoPhone: data.settings.momoPhone || "",
+          momoAccountName: data.settings.momoAccountName || "",
+          momoEnabled: data.settings.momoEnabled !== false,
+          bankCardsEnabled: data.settings.bankCardsEnabled === true,
+          bankCardsMessage: data.settings.bankCardsMessage || "Coming soon",
+          codEnabled: data.settings.codEnabled !== false,
         });
       }
     } catch (err: unknown) {
@@ -429,6 +447,82 @@ export default function AdminSettingsClient() {
                 className={inputClass}
               />
             </div>
+          </div>
+        </div>
+
+        {/* Payment */}
+        <div className={sectionClass}>
+          <h2 className="text-lg font-semibold text-slate-900 mb-1">Payment Methods</h2>
+          <p className="mb-4 text-sm text-slate-500">
+            Configure checkout payment options shown to customers.
+          </p>
+
+          <div className="grid gap-6">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <label className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-800">
+                <input
+                  type="checkbox"
+                  checked={form.momoEnabled}
+                  onChange={(e) => setForm({ ...form, momoEnabled: e.target.checked })}
+                  className="h-4 w-4 rounded border-slate-300 text-[#0071CE]"
+                />
+                Enable MTN Mobile Money (MoMo)
+              </label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={labelClass}>MoMo phone number</label>
+                  <input
+                    value={form.momoPhone}
+                    onChange={(e) => setForm({ ...form, momoPhone: e.target.value })}
+                    placeholder="0783428632"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Account holder name</label>
+                  <input
+                    value={form.momoAccountName}
+                    onChange={(e) => setForm({ ...form, momoAccountName: e.target.value })}
+                    placeholder="Grace NKURIKIYINKA"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 p-4">
+              <label className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-800">
+                <input
+                  type="checkbox"
+                  checked={form.bankCardsEnabled}
+                  onChange={(e) => setForm({ ...form, bankCardsEnabled: e.target.checked })}
+                  className="h-4 w-4 rounded border-slate-300 text-[#0071CE]"
+                />
+                Enable bank card payments
+              </label>
+              <div>
+                <label className={labelClass}>Bank cards message</label>
+                <input
+                  value={form.bankCardsMessage}
+                  onChange={(e) => setForm({ ...form, bankCardsMessage: e.target.value })}
+                  placeholder="Coming soon"
+                  className={inputClass}
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Shown when bank cards are disabled. Default: &quot;Coming soon&quot;
+                </p>
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-800">
+              <input
+                type="checkbox"
+                checked={form.codEnabled}
+                onChange={(e) => setForm({ ...form, codEnabled: e.target.checked })}
+                className="h-4 w-4 rounded border-slate-300 text-[#0071CE]"
+              />
+              Enable cash on delivery
+            </label>
           </div>
         </div>
 

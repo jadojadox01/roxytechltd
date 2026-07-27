@@ -64,6 +64,12 @@ export async function PUT(request: NextRequest) {
       instagramUrl,
       linkedinUrl,
       currency,
+      momoPhone,
+      momoAccountName,
+      momoEnabled,
+      bankCardsEnabled,
+      bankCardsMessage,
+      codEnabled,
     } = body;
 
     // Find existing settings
@@ -81,6 +87,12 @@ export async function PUT(request: NextRequest) {
       instagramUrl: instagramUrl ?? null,
       linkedinUrl: linkedinUrl ?? null,
       currency: currency || "RWF",
+      momoPhone: momoPhone ?? null,
+      momoAccountName: momoAccountName ?? null,
+      momoEnabled: momoEnabled !== false,
+      bankCardsEnabled: bankCardsEnabled === true,
+      bankCardsMessage: bankCardsMessage ?? "Coming soon",
+      codEnabled: codEnabled !== false,
     };
 
     // Create or update

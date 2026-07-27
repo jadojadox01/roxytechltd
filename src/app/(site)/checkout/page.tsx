@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import CheckoutForm from "@/components/Checkout/CheckoutForm";
+import { getSiteSettings } from "@/get-api-data/site-settings";
 import Link from "next/link";
 
 export async function generateMetadata() {
@@ -11,6 +12,16 @@ export async function generateMetadata() {
 
 export default async function CheckoutPage() {
   const session = await getServerSession(authOptions);
+  const siteSettings = await getSiteSettings();
+
+  const paymentSettings = {
+    momoPhone: siteSettings?.momoPhone ?? "0783428632",
+    momoAccountName: siteSettings?.momoAccountName ?? "Grace NKURIKIYINKA",
+    momoEnabled: siteSettings?.momoEnabled ?? true,
+    bankCardsEnabled: siteSettings?.bankCardsEnabled ?? false,
+    bankCardsMessage: siteSettings?.bankCardsMessage ?? "Coming soon",
+    codEnabled: siteSettings?.codEnabled ?? true,
+  };
 
   // If not logged in, show sign in / create account prompt
   if (!session?.user) {
@@ -56,7 +67,7 @@ export default async function CheckoutPage() {
             Complete your order by filling in your shipping details below.
           </p>
         </div>
-        <CheckoutForm user={session.user} />
+        <CheckoutForm user={session.user} paymentSettings={paymentSettings} />
       </div>
     </main>
   );

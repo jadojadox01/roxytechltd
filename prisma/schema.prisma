@@ -367,6 +367,12 @@ model SiteSetting {
   instagramUrl   String?
   linkedinUrl    String?
   currency       String   @default("RWF")
+  momoPhone      String?
+  momoAccountName String?
+  momoEnabled    Boolean  @default(true)
+  bankCardsEnabled Boolean @default(false)
+  bankCardsMessage String? @default("Coming soon")
+  codEnabled     Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
