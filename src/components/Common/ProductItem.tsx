@@ -51,6 +51,7 @@ const ProductItem = ({ item, bgClr = "white" }: Props) => {
     id: item.id,
     name: item.title,
     price: item.discountedPrice ? item.discountedPrice : item.price,
+    quantity: 1,
     currency: "usd",
     image: productImage,
     slug: item?.slug,
@@ -72,7 +73,7 @@ const ProductItem = ({ item, bgClr = "white" }: Props) => {
       updatedAt:
         item.updatedAt instanceof Date ? item.updatedAt.toISOString() : item.updatedAt ?? null,
     };
-    dispatch(updateQuickView(serializableItem as Product));
+    dispatch(updateQuickView(serializableItem as any));
     if (openModal) openModal();
   };
 
