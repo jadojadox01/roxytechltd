@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-import cloudinary from "@/lib/cloudinary";
+import cloudinary, { isCloudinaryReady } from "@/lib/cloudinary";
 
 export async function saveLocalImage(
   file: File,
@@ -21,11 +21,7 @@ export async function saveLocalImage(
 }
 
 export function isCloudinaryConfigured() {
-  return Boolean(
-    process.env.CLOUDINARY_CLOUD_NAME &&
-      process.env.CLOUDINARY_API_KEY &&
-      process.env.CLOUDINARY_API_SECRET
-  );
+  return isCloudinaryReady();
 }
 
 export async function uploadImageFile(
@@ -39,27 +35,24 @@ export async function uploadImageFile(
 
   if (isCloudinaryConfigured()) {
     const buffer = Buffer.from(await file.arrayBuffer());
-    const uploaded: { secure_url?: string } = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        { folder: `roxytech/${folder}` },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result ?? {});
-        }
-      );
-      stream.end(buffer);
+    const mime = file.type || "image/jpeg";
+    const dataUri = `data:${mime};base64,${buffer.toString("base64")}`;
+
+    const uploaded = await cloudinary.uploader.upload(dataUri, {
+      folder: `roxytech/${folder}`,
+      resource_type: "image",
     });
 
-    if (uploaded.secure_url) {
-      return uploaded.secure_url;
+    if (!uploaded.secure_url) {
+      throw new Error("Cloudinary upload did not return a URL");
     }
 
-    throw new Error("Cloudinary upload did not return a URL");
+    return uploaded.secure_url;
   }
 
   if (process.env.VERCEL || process.env.NODE_ENV === "production") {
     throw new Error(
-      "Image uploads on Vercel require Cloudinary. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in Vercel environment variables, then redeploy."
+      "Image uploads on Vercel require Cloudinary. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET (or CLOUDINARY_URL) in Vercel, then redeploy."
     );
   }
 
