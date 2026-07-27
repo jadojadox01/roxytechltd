@@ -297,7 +297,7 @@ const CheckoutForm = ({ user, paymentSettings }: Props) => {
           {items.length === 0 ? (
             <p>Your cart is empty.</p>
           ) : (
-            items.map((item: { id: string; name: string; quantity: number; price: number }) => (
+            items.map((item) => (
               <div key={item.id} className="flex items-center justify-between gap-3">
                 <span>
                   {item.name} × {item.quantity}
