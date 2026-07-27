@@ -5,6 +5,7 @@ import { requireStaff } from "@/lib/rbac";
 import { logActivity, getRequestMeta } from "@/lib/activity-log";
 import { isCloudinaryConfigured, uploadImageFile } from "@/lib/upload-image";
 import { getMissingCloudinaryVars } from "@/lib/cloudinary-env";
+import { slugify } from "@/lib/slugify";
 
 
 export const runtime = "nodejs";
@@ -277,7 +278,7 @@ title:updateData.title
 
 ...(updateData.slug && {
 
-slug:updateData.slug
+slug: slugify(String(updateData.slug))
 
 }),
 

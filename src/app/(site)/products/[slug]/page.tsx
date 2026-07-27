@@ -11,7 +11,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const product = await getProductBySlug(decodeURIComponent(slug));
   if (!product) return { title: "Product Not Found" };
   const siteName = await getSiteName();
   return {
@@ -22,15 +22,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductDetailPage({ params }: Props) {
   const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug);
 
-  const [product, reviewData] = await Promise.all([
-    getProductBySlug(slug),
-    getReviews(slug),
-  ]);
+  const product = await getProductBySlug(decodedSlug);
 
   if (!product) {
     notFound();
   }
+
+  const reviewData = await getReviews(product.slug);
 
   return (
     <ProductDetailClient

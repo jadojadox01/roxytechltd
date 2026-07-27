@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prismaDB";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { activeProductWhere } from "@/lib/schema-capabilities";
+import { slugify } from "@/lib/slugify";
 
 const mapProductsWithReviews = (products: any[]) =>
   products.map((product: any) => {
@@ -272,79 +273,83 @@ export const getAllProducts = unstable_cache(
 );
 
 export const getProductBySlug = async (slug: string) => {
-  const product = await prisma.product.findUnique({
-    where: { slug },
-    select: {
-      id: true,
-      title: true,
-      shortDescription: true,
-      description: true,
-      price: true,
-      discountedPrice: true,
-      slug: true,
-      quantity: true,
-      updatedAt: true,
-      category: {
-        select: {
-          title: true,
-          slug: true,
+  const raw = decodeURIComponent(slug || "").trim();
+  const candidates = Array.from(
+    new Set([raw, raw.replace(/\+/g, " "), slugify(raw)].filter(Boolean))
+  );
+
+  let product = null;
+  for (const candidate of candidates) {
+    product = await prisma.product.findUnique({
+      where: { slug: candidate },
+      select: {
+        id: true,
+        title: true,
+        shortDescription: true,
+        description: true,
+        price: true,
+        discountedPrice: true,
+        slug: true,
+        quantity: true,
+        updatedAt: true,
+        images: true,
+        category: {
+          select: {
+            title: true,
+            slug: true,
+          },
         },
-      },
-      productVariants: {
-        select: {
-          image: true,
-          color: true,
-          size: true,
-          isDefault: true,
+        productVariants: {
+          select: {
+            image: true,
+            color: true,
+            size: true,
+            isDefault: true,
+          },
         },
-      },
-      _count: {
-        select: {
-          reviews: {
-            where: {
-              isApproved: true,
+        _count: {
+          select: {
+            reviews: {
+              where: {
+                isApproved: true,
+              },
             },
           },
         },
-      },
-      additionalInformation: {
-        select: {
-          name: true,
-          description: true,
+        additionalInformation: {
+          select: {
+            name: true,
+            description: true,
+          },
         },
-      },
-      customAttributes: {
-        select: {
-          attributeName: true,
-          attributeValues: {
-            select: {
-              id: true,
-              title: true,
+        customAttributes: {
+          select: {
+            attributeName: true,
+            attributeValues: {
+              select: {
+                id: true,
+                title: true,
+              },
             },
           },
         },
+        body: true,
+        tags: true,
+        offers: true,
+        sku: true,
       },
-      body: true,
-      reviews: {
-        select: {
-          name: true,
-          comment: true,
-          email: true,
-          ratings: true,
-        },
-      },
-      tags: true,
-      offers: true,
-      sku: true,
-    },
-  });
-  const transformProduct = {
+    });
+    if (product) break;
+  }
+
+  if (!product) return null;
+
+  return {
     ...product,
-    price: product?.price.toNumber(),
-    discountedPrice: product?.discountedPrice ? product.discountedPrice.toNumber() : null,
-    reviews: product?._count.reviews,
+    price: Number(product.price),
+    discountedPrice: product.discountedPrice != null ? Number(product.discountedPrice) : null,
+    reviews: product._count.reviews,
   };
-  return transformProduct;
 };
 
 export const getProductById = async (productId: string) => {

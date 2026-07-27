@@ -5,6 +5,7 @@ import { isCloudinaryConfigured, uploadImageFile } from "@/lib/upload-image";
 import { getMissingCloudinaryVars } from "@/lib/cloudinary-env";
 import { requireStaff } from "@/lib/rbac";
 import { logActivity, getRequestMeta } from "@/lib/activity-log";
+import { slugify } from "@/lib/slugify";
 
 export const runtime = "nodejs";
 
@@ -159,8 +160,14 @@ export async function POST(req: Request) {
 
 
     title = title.trim();
-    slug = slug.trim();
+    slug = slugify(slug || title);
 
+    if (!slug) {
+      return NextResponse.json(
+        { error: "A valid slug is required" },
+        { status: 400 }
+      );
+    }
 
     description =
       description?.trim() || null;
@@ -177,17 +184,6 @@ export async function POST(req: Request) {
         { error: "Title is required" },
         { status: 400 }
       );
-
-    }
-
-
-
-    if (!slug) {
-
-      slug = title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
 
     }
 
