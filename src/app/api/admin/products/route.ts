@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prismaClientInstance } from "@/lib/prismaDB";
 import { revalidateProductCaches } from "@/lib/revalidate-products";
-import cloudinary from "@/lib/cloudinary";
+import { isCloudinaryConfigured, uploadImageFile } from "@/lib/upload-image";
+import { getMissingCloudinaryVars } from "@/lib/cloudinary-env";
 import { requireStaff } from "@/lib/rbac";
 import { logActivity, getRequestMeta } from "@/lib/activity-log";
 
@@ -96,49 +97,20 @@ export async function POST(req: Request) {
 
       const files = formData
         .getAll("images")
-        .filter((file): file is File => file instanceof File);
+        .filter((file): file is File => file instanceof File && file.size > 0);
 
-
+      if (files.length > 0 && !isCloudinaryConfigured()) {
+        return NextResponse.json(
+          {
+            error: "Cloudinary is not configured on the server. Add Cloudinary env vars in Vercel and redeploy.",
+            missing: getMissingCloudinaryVars(),
+          },
+          { status: 503 }
+        );
+      }
 
       for (const file of files) {
-
-
-        const buffer = Buffer.from(
-          await file.arrayBuffer()
-        );
-
-
-        const uploaded = await new Promise<any>(
-          (resolve, reject) => {
-
-
-            cloudinary.uploader.upload_stream(
-              {
-                folder: "products",
-              },
-
-              (error, result) => {
-
-                if (error) {
-                  reject(error);
-                } else {
-                  resolve(result);
-                }
-
-              }
-
-            ).end(buffer);
-
-
-          }
-        );
-
-
-        uploadedImages.push(
-          uploaded.secure_url
-        );
-
-
+        uploadedImages.push(await uploadImageFile(file, "products", "product"));
       }
 
 

@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaClientInstance } from "@/lib/prismaDB";
-import { promises as fs } from "fs";
-import path from "path";
 import { revalidateTag } from "next/cache";
+import { uploadImageFile } from "@/lib/upload-image";
 
 export const runtime = "nodejs";
 
@@ -46,12 +45,7 @@ export async function POST(req: Request) {
   let countdownImage: string | null = null;
   const imageFile = formData.get("image");
   if (imageFile instanceof File && imageFile.size > 0) {
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "deals");
-    await fs.mkdir(uploadDir, { recursive: true });
-    const ext = path.extname(imageFile.name || ".png") || ".png";
-    const safeName = `deal-${Date.now()}${ext}`;
-    await fs.writeFile(path.join(uploadDir, safeName), Buffer.from(await imageFile.arrayBuffer()));
-    countdownImage = `/uploads/deals/${safeName}`;
+    countdownImage = await uploadImageFile(imageFile, "deals", "deal");
   }
 
   const deal = await prismaClientInstance.countdown.create({

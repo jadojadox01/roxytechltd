@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prismaDB";
-import cloudinary from "@/lib/cloudinary";
 import { revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/rbac";
-import { isCloudinaryConfigured, saveLocalImage } from "@/lib/upload-image";
+import { uploadImageFile } from "@/lib/upload-image";
 
 export const runtime = "nodejs";
 
@@ -31,25 +30,7 @@ async function uploadLogo(file: File): Promise<string> {
     throw new Error("Logo must be under 2 MB");
   }
 
-  if (isCloudinaryConfigured()) {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const uploaded: { secure_url?: string } = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        { folder: "roxytech/header" },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result ?? {});
-        }
-      );
-      stream.end(buffer);
-    });
-
-    if (uploaded.secure_url) {
-      return uploaded.secure_url;
-    }
-  }
-
-  return saveLocalImage(file, "logo", "logo");
+  return uploadImageFile(file, "header", "logo");
 }
 
 export async function GET() {

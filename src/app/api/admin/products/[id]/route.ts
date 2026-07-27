@@ -3,8 +3,8 @@ import { prismaClientInstance } from "@/lib/prismaDB";
 import { revalidateProductCaches } from "@/lib/revalidate-products";
 import { requireStaff } from "@/lib/rbac";
 import { logActivity, getRequestMeta } from "@/lib/activity-log";
-import { promises as fs } from "fs";
-import path from "path";
+import { isCloudinaryConfigured, uploadImageFile } from "@/lib/upload-image";
+import { getMissingCloudinaryVars } from "@/lib/cloudinary-env";
 
 
 export const runtime = "nodejs";
@@ -207,69 +207,23 @@ file.size > 0
 
 if(files.length){
 
+if (!isCloudinaryConfigured()) {
+  return NextResponse.json(
+    {
+      error: "Cloudinary is not configured on the server. Add Cloudinary env vars in Vercel and redeploy.",
+      missing: getMissingCloudinaryVars(),
+    },
+    { status: 503 }
+  );
+}
 
 const uploadedImages:string[]=[];
 
-
-const uploadDir =
-path.join(
-process.cwd(),
-"public/uploads/products"
-);
-
-
-
-await fs.mkdir(
-uploadDir,
-{
-recursive:true
-}
-);
-
-
-
 for(const file of files){
-
-
-const filename =
-`${Date.now()}-${file.name.replace(/\s+/g,"-")}`;
-
-
-
-const filePath =
-path.join(
-uploadDir,
-filename
-);
-
-
-
-const buffer =
-Buffer.from(
-await file.arrayBuffer()
-);
-
-
-
-await fs.writeFile(
-filePath,
-buffer
-);
-
-
-
-uploadedImages.push(
-`/uploads/products/${filename}`
-);
-
-
+  uploadedImages.push(await uploadImageFile(file, "products", "product"));
 }
 
-
-
-updateData.images =
-uploadedImages;
-
+updateData.images = uploadedImages;
 
 }
 

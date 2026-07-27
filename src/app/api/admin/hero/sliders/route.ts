@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
 import { revalidateTag } from "next/cache";
 import { prismaClientInstance } from "@/lib/prismaDB";
 import { requireAdmin } from "@/lib/rbac";
 import { logActivity, getRequestMeta } from "@/lib/activity-log";
 import { createHeroSlider, listHeroSlidersAdmin } from "@/lib/hero-db";
+import { uploadImageFile } from "@/lib/upload-image";
 
 export const runtime = "nodejs";
 
@@ -18,12 +17,7 @@ function slugify(value: string) {
 }
 
 async function saveImage(file: File, prefix: string) {
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "hero", "sliders");
-  await fs.mkdir(uploadDir, { recursive: true });
-  const ext = path.extname(file.name || ".jpg") || ".jpg";
-  const safeName = `${prefix}-${Date.now()}${ext}`;
-  await fs.writeFile(path.join(uploadDir, safeName), Buffer.from(await file.arrayBuffer()));
-  return `/uploads/hero/sliders/${safeName}`;
+  return uploadImageFile(file, "hero/sliders", prefix);
 }
 
 export async function GET() {
