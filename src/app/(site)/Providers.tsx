@@ -11,6 +11,7 @@ import CartHydration from "@/components/Providers/CartHydration";
 import WishlistHydration from "@/components/Providers/WishlistHydration";
 import CurrencyHydration from "@/components/Providers/CurrencyHydration";
 import { AuthGateProvider } from "@/components/Auth/AuthGate";
+import IdleLogout from "@/components/Auth/IdleLogout";
 
 const Providers = ({
   children,
@@ -21,6 +22,7 @@ const Providers = ({
 }) => {
   return (
     <SessionProvider>
+      <IdleLogout />
       <ReduxProvider>
         <AuthGateProvider>
           <CurrencyHydration currency={currency} />

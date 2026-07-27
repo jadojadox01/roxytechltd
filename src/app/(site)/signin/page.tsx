@@ -33,6 +33,7 @@ export default function SignInPage() {
 function SignInForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
+  const idleLogout = searchParams.get("reason") === "idle";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
@@ -83,6 +84,11 @@ function SignInForm() {
       <div className="mx-auto max-w-md px-4 sm:px-6">
         <h1 className="text-3xl font-semibold text-slate-900">Sign in to your account</h1>
         <p className="mt-3 text-sm text-slate-600">Enter your credentials below.</p>
+        {idleLogout && (
+          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            You were signed out after 2 minutes of inactivity.
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div>
