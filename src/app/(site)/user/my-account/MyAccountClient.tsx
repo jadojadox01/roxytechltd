@@ -127,6 +127,17 @@ export default function MyAccountClient({ orders }: { orders: Order[] }) {
                     </li>
                   ))}
                 </ul>
+
+                {["CONFIRMED", "PREPARING", "READY_FOR_DELIVERY", "COMPLETED", "APPROVED"].includes(
+                  order.status
+                ) && (
+                  <a
+                    href={`/api/orders/${order.id}/receipt`}
+                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#02AAA4] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#028f86]"
+                  >
+                    Download PDF receipt
+                  </a>
+                )}
               </div>
             )}
           </div>

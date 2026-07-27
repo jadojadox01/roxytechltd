@@ -6,6 +6,7 @@ import {
   normalizeOrderStatusForWrite,
   productHasStatusColumn,
 } from "@/lib/schema-capabilities";
+import { notifyOrderConfirmed } from "@/lib/order-emails";
 
 const MODERN_STATUSES = [
   "PENDING",
@@ -111,6 +112,29 @@ export async function PATCH(request: NextRequest) {
           });
         }
       }
+    }
+
+    const becameConfirmed =
+      existing.status !== "CONFIRMED" &&
+      (requestedStatus === "CONFIRMED" || normalizedStatus === "CONFIRMED");
+
+    if (becameConfirmed) {
+      void notifyOrderConfirmed({
+        id: updatedOrder.id,
+        createdAt: updatedOrder.createdAt,
+        status: updatedOrder.status,
+        paymentMethod: updatedOrder.paymentMethod,
+        totalPrice: Number(updatedOrder.totalPrice),
+        shippingName: updatedOrder.shippingName,
+        shippingEmail: updatedOrder.shippingEmail,
+        shippingPhone: updatedOrder.shippingPhone,
+        shippingAddress: updatedOrder.shippingAddress,
+        items: updatedOrder.items.map((item) => ({
+          productTitle: item.productTitle,
+          quantity: item.quantity,
+          price: Number(item.price),
+        })),
+      }).catch((err) => console.error("[order-email] confirm failed", err));
     }
 
     const meta = getRequestMeta(request);

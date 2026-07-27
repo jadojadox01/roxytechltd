@@ -10,7 +10,8 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "db:seed-neon": "node scripts/seed-local-to-neon.js"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
@@ -38,6 +39,7 @@
     "next-sitemap": "^4.2.3",
     "nextjs-toploader": "^1.6.12",
     "nodemailer": "^7.0.13",
+    "pdf-lib": "^1.17.1",
     "quill": "^2.0.3",
     "rate-limiter-flexible": "^7.0.0",
     "react": "19.2.0",

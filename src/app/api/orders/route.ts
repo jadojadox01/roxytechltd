@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaClientInstance } from "@/lib/prismaDB";
+import { notifyOrderPlaced } from "@/lib/order-emails";
 
 type CheckoutItem = {
   id: string;
@@ -128,7 +129,25 @@ export async function POST(request: NextRequest) {
           create: orderItems,
         },
       },
+      include: { items: true },
     });
+
+    void notifyOrderPlaced({
+      id: order.id,
+      createdAt: order.createdAt,
+      status: order.status,
+      paymentMethod: order.paymentMethod,
+      totalPrice: Number(order.totalPrice),
+      shippingName: order.shippingName,
+      shippingEmail: order.shippingEmail,
+      shippingPhone: order.shippingPhone,
+      shippingAddress: order.shippingAddress,
+      items: order.items.map((item) => ({
+        productTitle: item.productTitle,
+        quantity: item.quantity,
+        price: Number(item.price),
+      })),
+    }).catch((err) => console.error("[order-email] place failed", err));
 
     return NextResponse.json({ success: true, order });
   } catch (error: unknown) {
