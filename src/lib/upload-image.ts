@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-import cloudinary, { isCloudinaryReady } from "@/lib/cloudinary";
+import cloudinary, { configureCloudinary, isCloudinaryReady } from "@/lib/cloudinary";
 
 export async function saveLocalImage(
   file: File,
@@ -33,7 +33,7 @@ export async function uploadImageFile(
     throw new Error("Image file is empty");
   }
 
-  if (isCloudinaryConfigured()) {
+  if (isCloudinaryReady() && configureCloudinary()) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const mime = file.type || "image/jpeg";
     const dataUri = `data:${mime};base64,${buffer.toString("base64")}`;
@@ -50,9 +50,9 @@ export async function uploadImageFile(
     return uploaded.secure_url;
   }
 
-  if (process.env.VERCEL || process.env.NODE_ENV === "production") {
+  if (process.env["VERCEL"] || process.env["NODE_ENV"] === "production") {
     throw new Error(
-      "Image uploads on Vercel require Cloudinary. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET (or CLOUDINARY_URL) in Vercel, then redeploy."
+      "Cloudinary is not available on the server. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in Vercel, then redeploy."
     );
   }
 

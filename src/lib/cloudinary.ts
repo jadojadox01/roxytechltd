@@ -1,27 +1,25 @@
 import { v2 as cloudinary } from "cloudinary";
+import { getCloudinaryEnv } from "@/lib/cloudinary-env";
 
-function hasSplitCloudinaryEnv() {
-  return Boolean(
-    process.env.CLOUDINARY_CLOUD_NAME &&
-      process.env.CLOUDINARY_API_KEY &&
-      process.env.CLOUDINARY_API_SECRET
-  );
-}
+export function configureCloudinary(): boolean {
+  const config = getCloudinaryEnv();
+  if (!config) return false;
 
-if (hasSplitCloudinaryEnv()) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-    secure: true,
-  });
-} else if (process.env.CLOUDINARY_URL) {
-  // Let the SDK read CLOUDINARY_URL from the environment.
+  if (config.mode === "split") {
+    cloudinary.config({
+      cloud_name: config.cloudName,
+      api_key: config.apiKey,
+      api_secret: config.apiSecret,
+      secure: true,
+    });
+    return true;
+  }
+
+  // SDK reads CLOUDINARY_URL from the runtime environment.
   cloudinary.config({ secure: true });
+  return true;
 }
+
+export { isCloudinaryReady, getMissingCloudinaryVars } from "@/lib/cloudinary-env";
 
 export default cloudinary;
-
-export function isCloudinaryReady() {
-  return hasSplitCloudinaryEnv() || Boolean(process.env.CLOUDINARY_URL);
-}

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismaClientInstance } from "@/lib/prismaDB";
 import { revalidateTag } from "next/cache";
 import { isCloudinaryConfigured, uploadImageFile } from "@/lib/upload-image";
+import { getMissingCloudinaryVars } from "@/lib/cloudinary-env";
 import { requireStaff } from "@/lib/rbac";
 
 export const runtime = "nodejs";
@@ -40,7 +41,8 @@ export async function POST(req: Request) {
         return NextResponse.json(
           {
             error:
-              "Cloudinary is not configured on the server. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET (or CLOUDINARY_URL) in Vercel environment variables and redeploy.",
+              "Cloudinary is not configured on the server. Add the Cloudinary variables in Vercel and redeploy.",
+            missing: getMissingCloudinaryVars(),
           },
           { status: 503 }
         );
