@@ -57,7 +57,11 @@ function SignInForm() {
       });
 
       if (result?.error) {
-        setError(result.error || "Invalid email or password.");
+        const friendly =
+          result.error === "CredentialsSignin"
+            ? "Invalid email or password."
+            : result.error;
+        setError(friendly);
         setLoading(false);
         return;
       }

@@ -7,6 +7,7 @@ import type { NextAuthOptions } from "next-auth";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prismaClientInstance),
+  secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
   },
@@ -22,13 +23,16 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        const email = credentials.email.trim().toLowerCase();
+        const password = credentials.password;
+
         const user = await prismaClientInstance.user.findUnique({
-          where: { email: credentials.email },
+          where: { email },
         });
 
         if (!user) {
           await logActivity({
-            userName: credentials.email,
+            userName: email,
             action: "LOGIN_FAILED",
             module: "AUTH",
             description: "Failed login attempt - user not found",
@@ -48,7 +52,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Account has been disabled. Contact administrator.");
         }
 
-        const isValid = await compare(credentials.password, user.password);
+        const isValid = await compare(password, user.password);
         if (!isValid) {
           await logActivity({
             userId: user.id,
