@@ -21,6 +21,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (session.user.role === "ADMIN" || session.user.role === "STORE_KEEPER") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Staff accounts cannot place orders. Please use a customer account.",
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { customer, items, paymentMethod } = body || {};
 

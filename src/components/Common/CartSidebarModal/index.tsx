@@ -6,7 +6,6 @@ import { useCart } from "@/hooks/useCart";
 import EmptyCart from "./EmptyCart";
 import SingleItem from "./SingleItem";
 import { formatPrice } from "@/utils/formatePrice";
-import { useRouter } from "next/navigation";
 
 const CartSidebarModal = () => {
   const {
@@ -15,6 +14,7 @@ const CartSidebarModal = () => {
     handleCartClick,
     cartDetails,
     totalPrice,
+    goToCheckout,
   } = useCart();
 
   useEffect(() => {
@@ -34,10 +34,9 @@ const CartSidebarModal = () => {
     };
   }, [shouldDisplayCart, handleCartClick]);
 
-  const router = useRouter();
   const handleCheckout = () => {
-    router.push("/checkout");
     handleCartClick();
+    goToCheckout();
   };
 
   return (

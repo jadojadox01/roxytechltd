@@ -1,14 +1,19 @@
-import Link from "next/link";
+"use client";
+
 import React from "react";
+import { useCart } from "@/hooks/useCart";
 
 const CheckoutBtn = () => {
+  const { goToCheckout } = useCart();
+
   return (
-    <Link
-      href="/checkout"
-      className="bg-dark hover:bg-darkLight  inline-flex font-medium  text-custom-sm py-[7px] px-5 rounded-lg text-white ease-out duration-200 "
+    <button
+      type="button"
+      onClick={goToCheckout}
+      className="inline-flex rounded-lg bg-dark px-5 py-[7px] text-custom-sm font-medium text-white duration-200 ease-out hover:bg-darkLight"
     >
       Checkout
-    </Link>
+    </button>
   );
 };
 

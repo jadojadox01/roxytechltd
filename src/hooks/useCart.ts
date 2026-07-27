@@ -16,10 +16,12 @@ import {
     CartItem,
 } from "@/redux/features/cart-slice";
 import { clearCartStorage } from "@/lib/cartStorage";
+import { useAuthGate } from "@/components/Auth/AuthGate";
 
 export const useCart = () => {
     const dispatch = useDispatch<AppDispatch>();
     const router = useRouter();
+    const { requireCustomer } = useAuthGate();
 
     // Selectors
     const cartCount = useSelector(selectCartCount);
@@ -55,9 +57,17 @@ export const useCart = () => {
     };
 
     const buyNow = (item: CartItem) => {
-        dispatch(clearCart());
-        dispatch(addItemToCart(item));
-        router.push("/checkout");
+        requireCustomer(() => {
+            dispatch(clearCart());
+            dispatch(addItemToCart(item));
+            router.push("/checkout");
+        });
+    };
+
+    const goToCheckout = () => {
+        requireCustomer(() => {
+            router.push("/checkout");
+        });
     };
 
     return {
@@ -76,5 +86,6 @@ export const useCart = () => {
         clearCart: clearAllItems,
         handleCartClick,
         buyNow,
+        goToCheckout,
     };
 };

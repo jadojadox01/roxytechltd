@@ -14,6 +14,7 @@ const CartPageContent = () => {
     incrementItem,
     decrementItem,
     clearCart,
+    goToCheckout,
   } = useCart();
 
   const items = Object.values(cartDetails ?? {});
@@ -127,12 +128,13 @@ const CartPageContent = () => {
           </div>
         </div>
 
-        <Link
-          href="/checkout"
+        <button
+          type="button"
+          onClick={goToCheckout}
           className="mt-6 flex w-full justify-center rounded-lg bg-[#02AAA4] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#028f86]"
         >
           Proceed to checkout
-        </Link>
+        </button>
         <Link
           href="/shop-without-sidebar"
           className="mt-3 flex w-full justify-center rounded-lg border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#02AAA4] hover:text-[#02AAA4]"

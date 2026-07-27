@@ -48,7 +48,10 @@ export async function proxy(req: NextRequest) {
 
   if (path.startsWith("/checkout") || path.startsWith("/user")) {
     if (!token) {
-      return NextResponse.redirect(new URL("/signin", req.url));
+      return NextResponse.redirect(new URL("/signin?callbackUrl=" + encodeURIComponent(path), req.url));
+    }
+    if (path.startsWith("/checkout") && (token.role === "ADMIN" || token.role === "STORE_KEEPER")) {
+      return NextResponse.redirect(new URL("/", req.url));
     }
   }
 

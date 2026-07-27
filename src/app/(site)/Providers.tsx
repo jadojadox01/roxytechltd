@@ -10,6 +10,7 @@ import CartProvider from "@/components/Providers/CartProvider";
 import CartHydration from "@/components/Providers/CartHydration";
 import WishlistHydration from "@/components/Providers/WishlistHydration";
 import CurrencyHydration from "@/components/Providers/CurrencyHydration";
+import { AuthGateProvider } from "@/components/Auth/AuthGate";
 
 const Providers = ({
   children,
@@ -21,19 +22,21 @@ const Providers = ({
   return (
     <SessionProvider>
       <ReduxProvider>
-        <CurrencyHydration currency={currency} />
-        <CartHydration />
-        <WishlistHydration />
-        <CartProvider>
-          <ModalProvider>
-            <PreviewSliderProvider>
-              {children}
-              <QuickViewModal />
-              <CartSidebarModal />
-              <PreviewSliderModal />
-            </PreviewSliderProvider>
-          </ModalProvider>
-        </CartProvider>
+        <AuthGateProvider>
+          <CurrencyHydration currency={currency} />
+          <CartHydration />
+          <WishlistHydration />
+          <CartProvider>
+            <ModalProvider>
+              <PreviewSliderProvider>
+                {children}
+                <QuickViewModal />
+                <CartSidebarModal />
+                <PreviewSliderModal />
+              </PreviewSliderProvider>
+            </ModalProvider>
+          </CartProvider>
+        </AuthGateProvider>
       </ReduxProvider>
     </SessionProvider>
   );
