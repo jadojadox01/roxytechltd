@@ -43,11 +43,12 @@ type HeaderCategory = {
 
 type IProps = {
   headerData?: (HeaderSetting & { siteName?: string | null }) | null;
+  siteName?: string;
   siteSettings?: SiteSettings | null;
   categories?: HeaderCategory[];
 };
 
-const MainHeader = ({ headerData, siteSettings, categories = [] }: IProps) => {
+const MainHeader = ({ headerData, siteName = "Shop", siteSettings, categories = [] }: IProps) => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [navigationOpen, setNavigationOpen] = useState(false);
@@ -114,6 +115,7 @@ const MainHeader = ({ headerData, siteSettings, categories = [] }: IProps) => {
   const isLoggedIn = status === "authenticated" && session?.user;
   const userName = session?.user?.name || session?.user?.email || "Account";
   const currency = siteSettings?.currency || "RWF";
+  const displaySiteName = headerData?.siteName?.trim() || siteName;
 
   const defaultHeaderText =
     currency === "RWF"
@@ -215,7 +217,7 @@ const MainHeader = ({ headerData, siteSettings, categories = [] }: IProps) => {
                 {headerData?.headerLogo ? (
                   <Image
                     src={headerData.headerLogo}
-                    alt={headerData.siteName || "Logo"}
+                    alt={displaySiteName}
                     width={148}
                     height={36}
                     priority
@@ -223,7 +225,7 @@ const MainHeader = ({ headerData, siteSettings, categories = [] }: IProps) => {
                   />
                 ) : (
                   <span className="flex items-center gap-1.5 text-xl font-bold tracking-tight text-white">
-                    {headerData?.siteName || "ROXY TECH"}
+                    {displaySiteName}
                     <svg className="h-4 w-4 text-yellow" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 2l2.4 6.9L21 9.2l-5.2 4.1L17.6 20 12 16.2 6.4 20l1.8-6.7L3 9.2l6.6-.3L12 2z" />
                     </svg>
@@ -242,7 +244,7 @@ const MainHeader = ({ headerData, siteSettings, categories = [] }: IProps) => {
                     type="search"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search everything at ROXY TECH..."
+                    placeholder={`Search everything at ${displaySiteName}...`}
                     aria-label="Search for products"
                     className="w-full bg-transparent px-5 py-2.5 text-sm text-dark outline-none placeholder:text-dark-5"
                   />
@@ -350,7 +352,7 @@ const MainHeader = ({ headerData, siteSettings, categories = [] }: IProps) => {
       {/* Mobile Menu - Offcanvas */}
       <MobileMenu
         headerLogo={headerData?.headerLogo || null}
-        siteName={headerData?.siteName || null}
+        siteName={displaySiteName}
         isOpen={navigationOpen}
         onClose={() => setNavigationOpen(false)}
         menuData={menuData}

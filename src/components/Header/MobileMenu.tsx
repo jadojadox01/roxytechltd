@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { MenuItem } from "./types";
+import MenuNavIcon from "./MenuNavIcon";
 import { CloseIcon } from "./icons";
 import Image from "next/image";
 
@@ -96,7 +97,7 @@ const MobileMenu = ({ isOpen, onClose, menuData, headerLogo, siteName, categorie
                   />
                 ) : (
                   <span className="text-lg font-bold text-slate-900">
-                    {siteName || "ROXY TECH"}
+                    {siteName || "Store"}
                   </span>
                 )}
               </Link>
@@ -122,7 +123,10 @@ const MobileMenu = ({ isOpen, onClose, menuData, headerLogo, siteName, categorie
                           onClick={() => toggleSubmenu(i)}
                           className="flex items-center justify-between w-full px-4 py-3 text-sm text-gray-800 rounded-lg hover:text-teal text-dark hover:bg-gray-2"
                         >
-                          <span className="font-medium">{menuItem.title}</span>
+                          <span className="flex items-center gap-3 font-medium">
+                            {menuItem.icon && <MenuNavIcon name={menuItem.icon} className="h-5 w-5 text-teal" />}
+                            {menuItem.title}
+                          </span>
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="16"
@@ -164,9 +168,10 @@ const MobileMenu = ({ isOpen, onClose, menuData, headerLogo, siteName, categorie
                     ) : (
                       <Link
                         href={menuItem.path || "#"}
-                        className="block px-4 py-3 text-sm font-medium rounded-lg hover:text-teal text-dark hover:bg-gray-2"
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:text-teal text-dark hover:bg-gray-2"
                         onClick={onClose}
                       >
+                        {menuItem.icon && <MenuNavIcon name={menuItem.icon} className="h-5 w-5 text-teal" />}
                         {menuItem.title}
                       </Link>
                     )}

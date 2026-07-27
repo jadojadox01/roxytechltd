@@ -1,12 +1,11 @@
-import type { Metadata } from "next";
 import { getAllProducts } from "@/get-api-data/product";
 import ProductItem from "@/components/Common/ProductItem";
 import Link from "next/link";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-  title: "Shop | ROXY TECH",
-  description: "Browse all our products.",
-};
+export async function generateMetadata() {
+  return createPageMetadata("Shop", "Browse all our products.");
+}
 
 type SortOption = "newest" | "oldest" | "popular";
 

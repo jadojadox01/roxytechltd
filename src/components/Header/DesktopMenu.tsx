@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { MenuItem } from "./types";
+import MenuNavIcon from "./MenuNavIcon";
 import { usePathname } from "next/navigation";
 
 interface DesktopMenuProps {
@@ -35,8 +36,9 @@ const DesktopMenu = ({ menuData, stickyMenu }: DesktopMenuProps) => {
             {menuItem.submenu ? (
               <>
                 <button
-                  className={`flex items-center gap-1 hover:text-teal font-medium ${stickyMenu ? "py-4" : "py-6"} relative text-sm font-medium ${menuItem.submenu?.some(subItem => pathname === subItem.path) ? "text-teal" : "text-dark"}`}
+                  className={`flex items-center gap-2 hover:text-teal font-medium ${stickyMenu ? "py-4" : "py-6"} relative text-sm font-medium ${menuItem.submenu?.some(subItem => pathname === subItem.path) ? "text-teal" : "text-dark"}`}
                 >
+                  {menuItem.icon && <MenuNavIcon name={menuItem.icon} />}
                   {menuItem.title}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -76,8 +78,9 @@ const DesktopMenu = ({ menuData, stickyMenu }: DesktopMenuProps) => {
             ) : (
               <Link
                 href={menuItem.path || "#"}
-                className={`hover:text-teal font-medium ${stickyMenu ? "py-4" : "py-6"} block relative text-sm ${menuItem.path && pathname.split('?')[0] === menuItem.path.split('?')[0] ? "text-teal" : "text-dark"}`}
+                className={`flex items-center gap-2 hover:text-teal font-medium ${stickyMenu ? "py-4" : "py-6"} relative text-sm ${menuItem.path && pathname.split('?')[0] === menuItem.path.split('?')[0] ? "text-teal" : "text-dark"}`}
               >
+                {menuItem.icon && <MenuNavIcon name={menuItem.icon} />}
                 {menuItem.title}
               </Link>
             )}

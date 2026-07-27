@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { formatPrice } from "@/utils/formatePrice";
 
 type ProductItem = {
@@ -23,22 +23,29 @@ export default function ProductList() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const router = useRouter();
+  const pathname = usePathname();
+
+  const loadProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/admin/products", {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+      const payload = await res.json();
+      setProducts(Array.isArray(payload) ? payload : []);
+    } catch {
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    async function loadProducts() {
-      try {
-        const res = await fetch("/api/admin/products", { cache: "no-store" });
-        const payload = await res.json();
-        setProducts(Array.isArray(payload) ? payload : []);
-      } catch {
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
+    if (pathname === "/admin/products") {
+      loadProducts();
     }
-
-    loadProducts();
-  }, []);
+  }, [pathname, loadProducts]);
 
   async function handleDelete(id: string) {
     if (!window.confirm("Delete this product?")) return;
@@ -47,6 +54,7 @@ export default function ProductList() {
       const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
       setProducts((prev) => prev.filter((product) => product.id !== id));
+      router.refresh();
     } catch {
       alert("Failed to delete product");
     } finally {

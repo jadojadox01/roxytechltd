@@ -1,4 +1,5 @@
 import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { formatPrice } from "@/utils/formatePrice";
 import { RootState } from "../store";
 
 type InitialState = {
@@ -123,12 +124,7 @@ export const selectTotalPrice = createSelector([selectCartItems], (items) => {
 
 export const selectFormattedTotalPrice = createSelector(
   [selectTotalPrice],
-  (totalPrice) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(totalPrice / 100);
-  }
+  (totalPrice) => formatPrice(totalPrice)
 );
 
 export const {

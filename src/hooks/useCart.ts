@@ -1,4 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
 import { AppDispatch } from "@/redux/store";
 import {
     addItemToCart,
@@ -18,6 +19,7 @@ import { clearCartStorage } from "@/lib/cartStorage";
 
 export const useCart = () => {
     const dispatch = useDispatch<AppDispatch>();
+    const router = useRouter();
 
     // Selectors
     const cartCount = useSelector(selectCartCount);
@@ -52,6 +54,12 @@ export const useCart = () => {
         dispatch(toggleCartModal());
     };
 
+    const buyNow = (item: CartItem) => {
+        dispatch(clearCart());
+        dispatch(addItemToCart(item));
+        router.push("/checkout");
+    };
+
     return {
         // State
         cartCount,
@@ -67,5 +75,6 @@ export const useCart = () => {
         decrementItem: decrementItemQuantity,
         clearCart: clearAllItems,
         handleCartClick,
+        buyNow,
     };
 };

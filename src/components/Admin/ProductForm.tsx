@@ -56,6 +56,7 @@ export default function ProductForm({ categories }: { categories: CategoryOption
         throw new Error(payload.error || 'Failed to create product');
       }
       router.push('/admin/products');
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create product');
     } finally { setLoading(false); }

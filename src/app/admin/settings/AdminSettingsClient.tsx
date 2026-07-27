@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import Image from "next/image";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 type SiteSettings = {
@@ -32,6 +32,7 @@ const labelClass = "mb-1.5 block text-sm font-medium text-slate-700";
 const sectionClass = "border-b border-slate-100 pb-8 mb-8";
 
 export default function AdminSettingsClient() {
+  const router = useRouter();
   // ── Site settings ──────────────────────────────────────────────
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -62,13 +63,28 @@ export default function AdminSettingsClient() {
   const [removeLogo, setRemoveLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const parseJsonResponse = async (res: Response) => {
+    const text = await res.text();
+    if (!text) {
+      throw new Error("Empty response from server");
+    }
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new Error("Invalid response from server");
+    }
+  };
+
   // ── Fetch site settings ─────────────────────────────────────────
   const fetchSiteSettings = useCallback(async () => {
     try {
       setLoadingSettings(true);
       const res = await fetch("/api/admin/site-settings");
-      const data = await res.json();
-      if (data.success && data.settings) {
+      const data = await parseJsonResponse(res);
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to load site settings");
+      }
+      if (data.settings) {
         setForm({
           about: data.settings.about || "",
           mission: data.settings.mission || "",
@@ -83,8 +99,8 @@ export default function AdminSettingsClient() {
           currency: data.settings.currency || "RWF",
         });
       }
-    } catch {
-      toast.error("Failed to load site settings");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to load site settings");
     } finally {
       setLoadingSettings(false);
     }
@@ -95,8 +111,11 @@ export default function AdminSettingsClient() {
     try {
       setLoadingHeader(true);
       const res = await fetch("/api/admin/header-settings");
-      const data = await res.json();
-      if (data.success && data.settings) {
+      const data = await parseJsonResponse(res);
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to load branding settings");
+      }
+      if (data.settings) {
         setHeaderSettings(data.settings);
         setBrandingForm({
           siteName: data.settings.siteName || "",
@@ -104,8 +123,8 @@ export default function AdminSettingsClient() {
         });
         setLogoPreview(data.settings.headerLogo || null);
       }
-    } catch {
-      toast.error("Failed to load branding settings");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to load branding settings");
     } finally {
       setLoadingHeader(false);
     }
@@ -139,6 +158,10 @@ export default function AdminSettingsClient() {
   // ── Save branding ───────────────────────────────────────────────
   const handleSaveBranding = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!brandingForm.siteName.trim()) {
+      toast.error("Site name is required");
+      return;
+    }
     setSavingBranding(true);
     try {
       const fd = new FormData();
@@ -151,15 +174,16 @@ export default function AdminSettingsClient() {
         method: "PUT",
         body: fd,
       });
-      const data = await res.json();
+      const data = await parseJsonResponse(res);
       if (!res.ok || !data.success) throw new Error(data.message || "Failed to save");
       setHeaderSettings(data.settings);
       setLogoFile(null);
       setRemoveLogo(false);
       if (data.settings.headerLogo) setLogoPreview(data.settings.headerLogo);
-      toast.success("Branding saved — reload to see nav changes");
-    } catch (err: any) {
-      toast.error(err.message || "Something went wrong");
+      toast.success("Branding saved successfully");
+      router.refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setSavingBranding(false);
     }
@@ -175,11 +199,12 @@ export default function AdminSettingsClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      const data = await res.json();
+      const data = await parseJsonResponse(res);
       if (!res.ok || !data.success) throw new Error(data.message || "Failed to save");
       toast.success("Settings saved successfully");
-    } catch (err: any) {
-      toast.error(err.message || "Something went wrong");
+      router.refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setSavingSettings(false);
     }
@@ -255,7 +280,8 @@ export default function AdminSettingsClient() {
               <input
                 value={brandingForm.siteName}
                 onChange={(e) => setBrandingForm({ ...brandingForm, siteName: e.target.value })}
-                placeholder="e.g. ROXY TECH"
+                placeholder="e.g. My Store"
+                required
                 className={inputClass}
               />
             </div>

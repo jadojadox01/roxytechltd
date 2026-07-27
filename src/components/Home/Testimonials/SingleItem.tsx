@@ -1,92 +1,36 @@
 import { Testimonial } from "@/types/testimonial";
+import { StarIcon } from "@/assets/icons";
 import Image from "next/image";
-import Link from "next/link";
 
 const SingleItem = ({ testimonial }: { testimonial: Testimonial }) => {
   return (
-    <div className="p-2 border rounded-2xl border-[#F2F4F7] bg-[#F6F7FB]">
-      <div className=" bg-white rounded-xl  py-7.5 px-4 sm:px-8.5 ">
-        <div className="flex items-center gap-1 mb-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="15"
-            height="15"
-            viewBox="0 0 15 15"
-            fill="none"
-          >
-            <path
-              d="M14.6643 5.40785L9.97852 4.68335L7.85568 0.232874C7.70035 -0.0776246 7.28614 -0.0776246 7.13081 0.232874L5.00798 4.70923L0.348098 5.40785C0.0115506 5.4596 -0.117891 5.89947 0.140992 6.13235L3.53235 9.62546L2.72981 14.5158C2.67804 14.8522 3.01458 15.1368 3.32524 14.9298L7.54503 12.6269L11.7389 14.9298C12.0237 15.0851 12.3861 14.8263 12.3085 14.5158L11.5059 9.62546L14.8973 6.13235C15.1044 5.89947 15.0008 5.4596 14.6643 5.40785Z"
-              fill="#FBB040"
-            />
-          </svg>{" "}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="15"
-            height="15"
-            viewBox="0 0 15 15"
-            fill="none"
-          >
-            <path
-              d="M14.6643 5.40785L9.97852 4.68335L7.85568 0.232874C7.70035 -0.0776246 7.28614 -0.0776246 7.13081 0.232874L5.00798 4.70923L0.348098 5.40785C0.0115506 5.4596 -0.117891 5.89947 0.140992 6.13235L3.53235 9.62546L2.72981 14.5158C2.67804 14.8522 3.01458 15.1368 3.32524 14.9298L7.54503 12.6269L11.7389 14.9298C12.0237 15.0851 12.3861 14.8263 12.3085 14.5158L11.5059 9.62546L14.8973 6.13235C15.1044 5.89947 15.0008 5.4596 14.6643 5.40785Z"
-              fill="#FBB040"
-            />
-          </svg>{" "}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="15"
-            height="15"
-            viewBox="0 0 15 15"
-            fill="none"
-          >
-            <path
-              d="M14.6643 5.40785L9.97852 4.68335L7.85568 0.232874C7.70035 -0.0776246 7.28614 -0.0776246 7.13081 0.232874L5.00798 4.70923L0.348098 5.40785C0.0115506 5.4596 -0.117891 5.89947 0.140992 6.13235L3.53235 9.62546L2.72981 14.5158C2.67804 14.8522 3.01458 15.1368 3.32524 14.9298L7.54503 12.6269L11.7389 14.9298C12.0237 15.0851 12.3861 14.8263 12.3085 14.5158L11.5059 9.62546L14.8973 6.13235C15.1044 5.89947 15.0008 5.4596 14.6643 5.40785Z"
-              fill="#FBB040"
-            />
-          </svg>{" "}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="15"
-            height="15"
-            viewBox="0 0 15 15"
-            fill="none"
-          >
-            <path
-              d="M14.6643 5.40785L9.97852 4.68335L7.85568 0.232874C7.70035 -0.0776246 7.28614 -0.0776246 7.13081 0.232874L5.00798 4.70923L0.348098 5.40785C0.0115506 5.4596 -0.117891 5.89947 0.140992 6.13235L3.53235 9.62546L2.72981 14.5158C2.67804 14.8522 3.01458 15.1368 3.32524 14.9298L7.54503 12.6269L11.7389 14.9298C12.0237 15.0851 12.3861 14.8263 12.3085 14.5158L11.5059 9.62546L14.8973 6.13235C15.1044 5.89947 15.0008 5.4596 14.6643 5.40785Z"
-              fill="#FBB040"
-            />
-          </svg>{" "}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="15"
-            height="15"
-            viewBox="0 0 15 15"
-            fill="none"
-          >
-            <path
-              d="M14.6643 5.40785L9.97852 4.68335L7.85568 0.232874C7.70035 -0.0776246 7.28614 -0.0776246 7.13081 0.232874L5.00798 4.70923L0.348098 5.40785C0.0115506 5.4596 -0.117891 5.89947 0.140992 6.13235L3.53235 9.62546L2.72981 14.5158C2.67804 14.8522 3.01458 15.1368 3.32524 14.9298L7.54503 12.6269L11.7389 14.9298C12.0237 15.0851 12.3861 14.8263 12.3085 14.5158L11.5059 9.62546L14.8973 6.13235C15.1044 5.89947 15.0008 5.4596 14.6643 5.40785Z"
-              fill="#FBB040"
-            />
-          </svg>
+    <div className="group h-full rounded-2xl border border-gray-3 bg-white p-1 transition duration-300 hover:-translate-y-1 hover:border-teal/30 hover:shadow-lg hover:shadow-teal/5">
+      <div className="flex h-full flex-col rounded-xl bg-gray-1 px-6 py-7 sm:px-8">
+        <div className="mb-4 flex items-center gap-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <StarIcon key={i} className="h-4 w-4 text-yellow" />
+          ))}
         </div>
 
-        <p className="mb-6 text-dark">{testimonial.review}</p>
+        <p className="mb-6 flex-1 text-sm leading-relaxed text-dark-3 sm:text-base">
+          &ldquo;{testimonial.review}&rdquo;
+        </p>
 
-        <Link href="#" className="flex items-center gap-4">
-          <div className="w-12.5 h-12.5 rounded-full overflow-hidden">
+        <div className="flex items-center gap-4 border-t border-gray-3 pt-5">
+          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full ring-2 ring-teal/20">
             <Image
               src={testimonial.authorImg}
-              alt="author"
-              className="w-12.5 h-12.5 rounded-full overflow-hidden"
-              width={50}
-              height={50}
+              alt={testimonial.authorName}
+              className="h-full w-full object-cover"
+              width={48}
+              height={48}
             />
           </div>
-
           <div>
-            <h3 className="font-medium text-dark">{testimonial.authorName}</h3>
-            <p className="text-custom-sm">{testimonial.authorRole}</p>
+            <h3 className="font-semibold text-dark">{testimonial.authorName}</h3>
+            <p className="text-sm text-dark-4">{testimonial.authorRole}</p>
           </div>
-        </Link>
+        </div>
       </div>
     </div>
   );

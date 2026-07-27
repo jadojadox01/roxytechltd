@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { revalidateTag } from "next/cache";
 
 import { prisma } from "@/lib/prismaDB";
-import { authOptions } from "@/lib/auth";
+import { requireAdmin } from "@/lib/rbac";
 
 export const runtime = "nodejs";
 
-// ======================================================
-// GET SITE SETTINGS (PUBLIC)
-// ======================================================
 export async function GET() {
+  const { error } = await requireAdmin();
+  if (error) return error;
+
   try {
     let settings = await prisma.siteSetting.findFirst();
 
@@ -47,20 +46,8 @@ export async function GET() {
 // ======================================================
 export async function PUT(request: NextRequest) {
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Access denied",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
+    const { error: authError } = await requireAdmin();
+    if (authError) return authError;
 
     // Parse request body
     const body = await request.json();

@@ -13,6 +13,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (String(message).length > 2000) {
+      return NextResponse.json(
+        { success: false, message: "Message is too long" },
+        { status: 400 }
+      );
+    }
+
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {

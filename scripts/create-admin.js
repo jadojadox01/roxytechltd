@@ -1,24 +1,34 @@
-const bcrypt = require('bcrypt');
-const { PrismaClient } = require('@prisma/client');
+const bcrypt = require("bcrypt");
+require("dotenv").config();
+const { PrismaClient } = require("@prisma/client");
+const { PrismaPg } = require("@prisma/adapter-pg");
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
 
-async function main() {
-  const email = 'admin@gmail.com';
-  const password = 'admin';
-  const name = 'Admin';
-
-  const hashed = await bcrypt.hash(password, 10);
-
+async function createUser(email, password, name, role) {
+  const hashed = await bcrypt.hash(password, 12);
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    console.log('User already exists. Updating role to ADMIN and password.');
-    await prisma.user.update({ where: { email }, data: { role: 'ADMIN', password: hashed, name } });
-    console.log('Updated existing admin:', email);
+    await prisma.user.update({
+      where: { email },
+      data: { role, password: hashed, name, status: "ACTIVE" },
+    });
+    console.log(`Updated ${role}:`, email);
   } else {
-    const user = await prisma.user.create({ data: { email, password: hashed, role: 'ADMIN', name } });
-    console.log('Created admin:', user.email);
+    await prisma.user.create({
+      data: { email, password: hashed, role, name, status: "ACTIVE" },
+    });
+    console.log(`Created ${role}:`, email);
   }
+}
+
+async function main() {
+  await createUser("admin@gmail.com", "admin", "Admin", "ADMIN");
+  await createUser("storekeeper@gmail.com", "storekeeper", "Store Keeper John", "STORE_KEEPER");
+  console.log("\nDefault credentials:");
+  console.log("  Admin:        admin@gmail.com / admin");
+  console.log("  Store Keeper: storekeeper@gmail.com / storekeeper");
 }
 
 main()
@@ -26,6 +36,4 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .finally(() => prisma.$disconnect());

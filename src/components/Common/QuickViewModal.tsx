@@ -25,7 +25,7 @@ const QuickViewModal = () => {
   const { openPreviewModal } = usePreviewSlider();
   const [quantity, setQuantity] = useState(1);
   const dispatch = useDispatch<AppDispatch>();
-  const { addItem } = useCart();
+  const { addItem, buyNow } = useCart();
   const [avgRating, setAvgRating] = useState(0);
   const [totalRating, setTotalRating] = useState(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -50,23 +50,35 @@ const QuickViewModal = () => {
   };
 
   // add to cart
+  const buildCartItem = () => ({
+    id: product.id,
+    name: product.title,
+    price: product.discountedPrice ? product.discountedPrice : product.price,
+    currency: "usd",
+    image: defaultVariant?.image ? defaultVariant.image : "",
+    price_id: null,
+    slug: product?.slug,
+    availableQuantity: product.quantity,
+    color: defaultVariant?.color ? defaultVariant.color : "",
+    size: defaultVariant?.size ? defaultVariant.size : "",
+    quantity,
+  });
+
   const handleAddToCart = () => {
-    const cartItem = {
-      id: product.id,
-      name: product.title,
-      price: product.discountedPrice ? product.discountedPrice : product.price,
-      currency: "usd",
-      image: defaultVariant?.image ? defaultVariant.image : "",
-      price_id: null,
-      slug: product?.slug,
-      availableQuantity: product.quantity,
-      color: defaultVariant?.color ? defaultVariant.color : "",
-      size: defaultVariant?.size ? defaultVariant.size : "",
-    };
     if (product.quantity > 0) {
       // @ts-ignore
-      addItem(cartItem);
+      addItem(buildCartItem());
       toast.success("Product added to cart!");
+      closeModal();
+    } else {
+      toast.error("This product is out of stock!");
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (product.quantity > 0) {
+      // @ts-ignore
+      buyNow(buildCartItem());
       closeModal();
     } else {
       toast.error("This product is out of stock!");
@@ -315,9 +327,17 @@ const QuickViewModal = () => {
                     <button
                       disabled={quantity < 1 || product.quantity < 1}
                       onClick={() => handleAddToCart()}
-                      className="inline-flex py-3 font-medium text-white duration-200 ease-out rounded-lg bg-teal px-7 hover:bg-teal-dark"
+                      className="inline-flex py-3 font-medium duration-200 ease-out rounded-lg border border-teal px-7 text-teal hover:bg-teal/5"
                     >
                       {product.quantity > 0 ? "Add to Cart" : "Out of Stock"}
+                    </button>
+
+                    <button
+                      disabled={quantity < 1 || product.quantity < 1}
+                      onClick={() => handleBuyNow()}
+                      className="inline-flex py-3 font-medium text-white duration-200 ease-out rounded-lg bg-teal px-7 hover:bg-teal-dark"
+                    >
+                      Buy Now
                     </button>
 
                     <button

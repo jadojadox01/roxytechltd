@@ -8,12 +8,22 @@ import { PreviewSliderProvider } from "../context/PreviewSliderContext";
 import PreviewSliderModal from "@/components/Common/PreviewSlider";
 import CartProvider from "@/components/Providers/CartProvider";
 import CartHydration from "@/components/Providers/CartHydration";
+import WishlistHydration from "@/components/Providers/WishlistHydration";
+import CurrencyHydration from "@/components/Providers/CurrencyHydration";
 
-const Providers = ({ children }: { children: React.ReactNode }) => {
+const Providers = ({
+  children,
+  currency = "RWF",
+}: {
+  children: React.ReactNode;
+  currency?: string;
+}) => {
   return (
     <SessionProvider>
       <ReduxProvider>
+        <CurrencyHydration currency={currency} />
         <CartHydration />
+        <WishlistHydration />
         <CartProvider>
           <ModalProvider>
             <PreviewSliderProvider>

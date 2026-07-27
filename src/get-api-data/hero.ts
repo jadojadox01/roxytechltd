@@ -1,107 +1,70 @@
-import { prisma } from "@/lib/prismaDB";
 import { unstable_cache } from "next/cache";
+import { listHeroBannersPublic, listHeroSlidersPublic } from "@/lib/hero-db";
 
-
-type RawHeroProduct = {
-  price: { toNumber: () => number };
-  discountedPrice?: { toNumber: () => number } | null;
-  title: string;
-  slug: string;
-};
-
-type RawHeroBanner = {
-  id: number;
-  bannerName?: string | null;
-  bannerImage: string;
-  subtitle?: string | null;
-  slug: string;
-  productId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  product: RawHeroProduct;
-};
-
-// get hero banners
 export const getHeroBanners = unstable_cache(
   async () => {
-    const heroBanners = (await prisma.heroBanner.findMany({
-      orderBy: { updatedAt: "desc" },
-      include: {
-        product: {
-          select: {
-            price: true,
-            discountedPrice: true,
-            title: true,
-            slug: true
-          }
-        }
-      }
-    })) as RawHeroBanner[];
-
-    return heroBanners.map((item) => ({
-      ...item,
+    const rows = await listHeroBannersPublic();
+    return rows.map((item) => ({
+      id: item.id,
+      bannerName: item.bannerName,
+      bannerImage: item.bannerImage,
+      subtitle: item.subtitle,
+      slug: item.slug,
+      productId: item.productId,
+      ctaLabel: item.ctaLabel,
+      sortOrder: item.sortOrder,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
       product: {
-        ...item.product,
-        price: item.product.price.toNumber(),
-        discountedPrice: item.product.discountedPrice ? item.product.discountedPrice.toNumber() : null
-      }
+        title: item.productTitle,
+        slug: item.productSlug,
+        price: Number(item.productPrice),
+        discountedPrice:
+          item.productDiscountedPrice != null ? Number(item.productDiscountedPrice) : null,
+      },
     }));
   },
-  ['heroBanners'], { tags: ['heroBanners'] }
+  ["heroBanners"],
+  { tags: ["heroBanners"] }
 );
 
-// get hero sliders
 export const getHeroSliders = unstable_cache(
   async () => {
-    type RawHeroSlider = {
-      id: number;
-      sliderName: string;
-      sliderImage: string;
-      discountRate: number;
-      slug: string;
-      productId: string;
-      createdAt: Date;
-      updatedAt: Date;
-      product: RawHeroProduct & { shortDescription?: string | null };
-    };
-
-    const heroSliders = (await prisma.heroSlider.findMany({
-      orderBy: { updatedAt: "desc" },
-      include: {
-        product: {
-          select: {
-            price: true,
-            discountedPrice: true,
-            title: true,
-            slug: true,
-            shortDescription: true
-          }
-        }
-      }
-    })) as RawHeroSlider[];
-
-    return heroSliders.map((item: RawHeroSlider) => ({
-      ...item,
+    const rows = await listHeroSlidersPublic();
+    return rows.map((item) => ({
+      id: item.id,
+      sliderName: item.sliderName,
+      sliderImage: item.sliderImage,
+      discountRate: item.discountRate,
+      slug: item.slug,
+      productId: item.productId,
+      headline: item.headline,
+      description: item.description,
+      ctaLabel: item.ctaLabel,
+      sortOrder: item.sortOrder,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
       product: {
-        ...item.product,
-        price: item.product.price.toNumber(),
-        discountedPrice: item.product.discountedPrice ? item.product.discountedPrice.toNumber() : null
-      }
-    }))
+        title: item.productTitle,
+        slug: item.productSlug,
+        shortDescription: item.productShortDescription,
+        price: 0,
+        discountedPrice: null,
+      },
+    }));
   },
-  ['heroSliders'], { tags: ['heroSliders'] }
+  ["heroSliders"],
+  { tags: ["heroSliders"] }
 );
 
-
-// single hero banner
-export const getSingleHeroBanner = async (id:number) => 
+export const getSingleHeroBanner = async (id: number) =>
   unstable_cache(
     async () => {
-      return await prisma.heroBanner.findUnique({
-        where: {
-          id: id
-        }
+      const { prismaClientInstance } = await import("@/lib/prismaDB");
+      return prismaClientInstance.heroBanner.findUnique({
+        where: { id },
       });
     },
-    ['single-hero-banner'], { tags: [`single-hero-banner-${id}`] }
-  )
+    ["single-hero-banner"],
+    { tags: [`single-hero-banner-${id}`] }
+  );

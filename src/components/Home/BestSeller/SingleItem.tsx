@@ -19,7 +19,7 @@ const SingleItem = ({ item }: { item: Product }) => {
   );
   const { openModal } = useModalContext();
   const dispatch = useDispatch<AppDispatch>();
-  const { addItem, cartDetails } = useCart();
+  const { addItem, buyNow, cartDetails } = useCart();
   const wishlistItems = useAppSelector((state) => state.wishlistReducer.items);
 
   const isAlradyAdded = Object.values(cartDetails ?? {}).some(
@@ -74,6 +74,15 @@ const SingleItem = ({ item }: { item: Product }) => {
       // @ts-ignore
       addItem(cartItem);
       toast.success("Product added to cart!");
+    } else {
+      toast.error("This product is out of stock!");
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (item.quantity > 0) {
+      // @ts-ignore
+      buyNow(cartItem);
     } else {
       toast.error("This product is out of stock!");
     }
@@ -167,13 +176,22 @@ const SingleItem = ({ item }: { item: Product }) => {
           View in Cart
         </Link>
       ) : (
-        <button
-          onClick={handleAddToCart}
-          disabled={item.quantity < 1}
-          className="mt-auto w-full rounded-full bg-blue py-2.5 text-sm font-semibold text-white transition hover:bg-blue-dark disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {item.quantity > 0 ? "Add to Cart" : "Out of Stock"}
-        </button>
+        <div className="mt-auto grid grid-cols-2 gap-2">
+          <button
+            onClick={handleAddToCart}
+            disabled={item.quantity < 1}
+            className="w-full rounded-full border border-blue py-2.5 text-sm font-semibold text-blue transition hover:bg-blue/5 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {item.quantity > 0 ? "Add to Cart" : "Out of Stock"}
+          </button>
+          <button
+            onClick={handleBuyNow}
+            disabled={item.quantity < 1}
+            className="w-full rounded-full bg-[#02AAA4] py-2.5 text-sm font-semibold text-white transition hover:bg-[#028f86] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Buy Now
+          </button>
+        </div>
       )}
     </div>
   );

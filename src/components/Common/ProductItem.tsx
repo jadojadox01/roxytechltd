@@ -32,7 +32,7 @@ const ProductItem = ({ item, bgClr = "[#F6F7FB]" }: Props) => {
   // const [product, setProduct] = useState({});
   const dispatch = useDispatch<AppDispatch>();
 
-  const { addItem, cartDetails } = useCart();
+  const { addItem, buyNow, cartDetails } = useCart();
 
   const pathUrl = usePathname();
 
@@ -79,6 +79,15 @@ const ProductItem = ({ item, bgClr = "[#F6F7FB]" }: Props) => {
       // @ts-ignore
       addItem(cartItem);
       toast.success("Product added to cart!");
+    } else {
+      toast.error("This product is out of stock!");
+    }
+  };
+
+  const handleBuyNow = (item: Product) => {
+    if (item.quantity > 0) {
+      // @ts-ignore
+      buyNow(cartItem);
     } else {
       toast.error("This product is out of stock!");
     }
@@ -148,13 +157,22 @@ const ProductItem = ({ item, bgClr = "[#F6F7FB]" }: Props) => {
           {isAlradyAdded ? (
             <CheckoutBtn />
           ) : (
-            <button
-              onClick={() => handleAddToCart(item)}
-              disabled={item.quantity < 1}
-              className="inline-flex px-5 py-2 font-medium h-[38px] text-white duration-200 ease-out rounded-lg text-custom-sm bg-teal hover:bg-teal-dark"
-            >
-              {item.quantity > 0 ? "Add to Cart" : "Out of Stock"}
-            </button>
+            <>
+              <button
+                onClick={() => handleAddToCart(item)}
+                disabled={item.quantity < 1}
+                className="inline-flex px-4 py-2 font-medium h-[38px] text-teal duration-200 ease-out rounded-lg text-custom-sm border border-teal bg-white hover:bg-teal/5"
+              >
+                {item.quantity > 0 ? "Add to Cart" : "Out of Stock"}
+              </button>
+              <button
+                onClick={() => handleBuyNow(item)}
+                disabled={item.quantity < 1}
+                className="inline-flex px-4 py-2 font-medium h-[38px] text-white duration-200 ease-out rounded-lg text-custom-sm bg-teal hover:bg-teal-dark"
+              >
+                Buy Now
+              </button>
+            </>
           )}
           {/* wishlist button */}
           <WishlistButton

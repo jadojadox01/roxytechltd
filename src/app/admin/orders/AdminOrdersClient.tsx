@@ -19,7 +19,7 @@ type Order = {
   shippingPhone: string;
   shippingAddress: string;
   totalPrice: number;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: "PENDING" | "CONFIRMED" | "PREPARING" | "READY_FOR_DELIVERY" | "COMPLETED" | "REJECTED";
   createdAt: string;
   items: OrderItem[];
   user: { id: string; name: string | null; email: string };
@@ -34,7 +34,7 @@ export default function AdminOrdersClient() {
   
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -57,7 +57,7 @@ export default function AdminOrdersClient() {
     fetchOrders();
   }, [fetchOrders]);
 
-  const handleUpdateStatus = async (orderId: string, newStatus: "APPROVED" | "REJECTED") => {
+  const handleUpdateStatus = async (orderId: string, newStatus: Order["status"]) => {
     try {
       setUpdatingId(orderId);
       const res = await fetch("/api/admin/orders", {
@@ -72,11 +72,7 @@ export default function AdminOrdersClient() {
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
       );
-      toast.success(
-        newStatus === "APPROVED"
-          ? "Order approved successfully"
-          : "Order rejected"
-      );
+      toast.success(`Order updated to ${newStatus.replace(/_/g, " ")}`);
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
     } finally {
@@ -101,14 +97,15 @@ export default function AdminOrdersClient() {
 
   const statusBadge = (status: string) => {
     const base = "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap";
-    switch (status) {
-      case "APPROVED":
-        return `${base} bg-green-100 text-green-800`;
-      case "REJECTED":
-        return `${base} bg-red-100 text-red-800`;
-      default:
-        return `${base} bg-yellow-100 text-yellow-800`;
-    }
+    const colors: Record<string, string> = {
+      PENDING: "bg-yellow-100 text-yellow-800",
+      CONFIRMED: "bg-blue-100 text-blue-800",
+      PREPARING: "bg-indigo-100 text-indigo-800",
+      READY_FOR_DELIVERY: "bg-purple-100 text-purple-800",
+      COMPLETED: "bg-green-100 text-green-800",
+      REJECTED: "bg-red-100 text-red-800",
+    };
+    return `${base} ${colors[status] || "bg-slate-100 text-slate-800"}`;
   };
 
   if (loading) {
@@ -154,7 +151,10 @@ export default function AdminOrdersClient() {
           >
             <option value="ALL">All Status</option>
             <option value="PENDING">Pending</option>
-            <option value="APPROVED">Approved</option>
+            <option value="CONFIRMED">Confirmed</option>
+            <option value="PREPARING">Preparing</option>
+            <option value="READY_FOR_DELIVERY">Ready for Delivery</option>
+            <option value="COMPLETED">Completed</option>
             <option value="REJECTED">Rejected</option>
           </select>
           <button
@@ -237,19 +237,17 @@ export default function AdminOrdersClient() {
               <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 px-4 sm:px-5 py-3">
                 <span className="text-xs font-medium text-slate-500">Quick action:</span>
                 <button
-                  onClick={() => handleUpdateStatus(order.id, "APPROVED")}
+                  onClick={() => handleUpdateStatus(order.id, "CONFIRMED")}
                   disabled={updatingId === order.id}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                  {updatingId === order.id ? "Updating..." : "Approve"}
+                  {updatingId === order.id ? "Updating..." : "Confirm"}
                 </button>
                 <button
                   onClick={() => handleUpdateStatus(order.id, "REJECTED")}
                   disabled={updatingId === order.id}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-red-600 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                   Reject
                 </button>
               </div>
@@ -274,20 +272,51 @@ export default function AdminOrdersClient() {
                       Actions
                     </h4>
                     <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
-                      <button
-                        onClick={() => handleUpdateStatus(order.id, "APPROVED")}
-                        disabled={updatingId === order.id || order.status === "APPROVED"}
-                        className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap"
-                      >
-                        {updatingId === order.id ? "Updating..." : "Approve"}
-                      </button>
-                      <button
-                        onClick={() => handleUpdateStatus(order.id, "REJECTED")}
-                        disabled={updatingId === order.id || order.status === "REJECTED"}
-                        className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap"
-                      >
-                        {updatingId === order.id ? "Updating..." : "Reject"}
-                      </button>
+                      {order.status === "PENDING" && (
+                        <>
+                          <button
+                            onClick={() => handleUpdateStatus(order.id, "CONFIRMED")}
+                            disabled={updatingId === order.id}
+                            className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:opacity-50"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() => handleUpdateStatus(order.id, "REJECTED")}
+                            disabled={updatingId === order.id}
+                            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                      {order.status === "CONFIRMED" && (
+                        <button
+                          onClick={() => handleUpdateStatus(order.id, "PREPARING")}
+                          disabled={updatingId === order.id}
+                          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                        >
+                          Start Preparing
+                        </button>
+                      )}
+                      {order.status === "PREPARING" && (
+                        <button
+                          onClick={() => handleUpdateStatus(order.id, "READY_FOR_DELIVERY")}
+                          disabled={updatingId === order.id}
+                          className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                        >
+                          Ready for Delivery
+                        </button>
+                      )}
+                      {order.status === "READY_FOR_DELIVERY" && (
+                        <button
+                          onClick={() => handleUpdateStatus(order.id, "COMPLETED")}
+                          disabled={updatingId === order.id}
+                          className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                        >
+                          Mark Completed
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

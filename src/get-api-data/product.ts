@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prismaDB";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
+import { activeProductWhere } from "@/lib/schema-capabilities";
 
 const mapProductsWithReviews = (products: any[]) =>
   products.map((product: any) => {
@@ -26,7 +27,6 @@ const mapProductsWithReviews = (products: any[]) =>
     };
   });
 
-// get product for id and title 
 export const getProductsIdAndTitle = unstable_cache(
   async () => {
     return await prisma.product.findMany({
@@ -37,10 +37,10 @@ export const getProductsIdAndTitle = unstable_cache(
       },
     });
   },
-  ['products'], { tags: ['products'] }
+  ["product-id-title"],
+  { tags: ["products"] }
 );
 
-// get new arrival product
 export const getNewArrivalsProduct = unstable_cache(
   async () => {
     const selectFields = {
@@ -57,43 +57,41 @@ export const getNewArrivalsProduct = unstable_cache(
           image: true,
           color: true,
           size: true,
-          isDefault: true
-        }
+          isDefault: true,
+        },
       },
       _count: {
         select: {
           reviews: {
             where: {
-              isApproved: true
-            }
+              isApproved: true,
+            },
           },
-        }
-      }
+        },
+      },
     } as const;
 
-    // Prefer products the admin explicitly flagged as new arrivals
     let products = await prisma.product.findMany({
       where: { isNewArrival: true },
       orderBy: { updatedAt: "desc" },
       select: selectFields,
-      take: 8
+      take: 8,
     });
 
-    // Fallback to the most recent products so the section is never empty
     if (products.length === 0) {
       products = await prisma.product.findMany({
         orderBy: { updatedAt: "desc" },
         select: selectFields,
-        take: 8
+        take: 8,
       });
     }
 
     return mapProductsWithReviews(products as any[]);
   },
-  ['products'], { tags: ['products'] }
+  ["products-new-arrivals"],
+  { tags: ["products"] }
 );
 
-// get best selling product
 export const getBestSellingProducts = unstable_cache(
   async () => {
     const products = await prisma.product.findMany({
@@ -112,31 +110,78 @@ export const getBestSellingProducts = unstable_cache(
             image: true,
             color: true,
             size: true,
-            isDefault: true
-          }
+            isDefault: true,
+          },
         },
         _count: {
           select: {
             reviews: {
               where: {
-                isApproved: true
-              }
-            }
-          }
-        }
+                isApproved: true,
+              },
+            },
+          },
+        },
       },
-      orderBy: [
-        { reviews: { _count: "desc" } },
-        { updatedAt: "desc" },
-      ],
-      take: 6
+      orderBy: [{ reviews: { _count: "desc" } }, { updatedAt: "desc" }],
+      take: 6,
     });
     return mapProductsWithReviews(products as any[]);
   },
-  ['products'], { tags: ['products'] }
+  ["products-best-selling"],
+  { tags: ["products"] }
 );
 
-// get latest product
+export const getDealProducts = unstable_cache(
+  async () => {
+    try {
+      const selectFields = {
+        id: true,
+        title: true,
+        shortDescription: true,
+        price: true,
+        discountedPrice: true,
+        slug: true,
+        quantity: true,
+        updatedAt: true,
+        images: true,
+        productVariants: {
+          select: {
+            image: true,
+            color: true,
+            size: true,
+            isDefault: true,
+          },
+        },
+        _count: {
+          select: {
+            reviews: { where: { isApproved: true } },
+          },
+        },
+      } as const;
+
+      const productFilter = await activeProductWhere();
+
+      const products = await prisma.product.findMany({
+        where: {
+          discountedPrice: { not: null },
+          ...productFilter,
+        },
+        select: selectFields,
+        orderBy: { updatedAt: "desc" },
+        take: 12,
+      });
+
+      return mapProductsWithReviews(products as any[]);
+    } catch (error) {
+      console.error("[getDealProducts]", error);
+      return [];
+    }
+  },
+  ["deal-products"],
+  { tags: ["products", "deal-products"] }
+);
+
 export const getLatestProducts = unstable_cache(
   async () => {
     const products = await prisma.product.findMany({
@@ -154,35 +199,33 @@ export const getLatestProducts = unstable_cache(
             image: true,
             color: true,
             size: true,
-            isDefault: true
-          }
+            isDefault: true,
+          },
         },
         _count: {
           select: {
             reviews: {
               where: {
-                isApproved: true
-              }
-            }
-          }
-        }
+                isApproved: true,
+              },
+            },
+          },
+        },
       },
-      orderBy: [
-        { reviews: { _count: "desc" } },
-        { updatedAt: "desc" },
-      ],
-      take: 3
+      orderBy: [{ reviews: { _count: "desc" } }, { updatedAt: "desc" }],
+      take: 3,
     });
     return mapProductsWithReviews(products as any[]);
   },
-  ['products'], { tags: ['products'] }
+  ["products-latest"],
+  { tags: ["products"] }
 );
 
-
-// GET ALL PRODUCTS
 export const getAllProducts = unstable_cache(
   async (
-    orderBy: { updatedAt?: Prisma.SortOrder } | { reviews: { _count: Prisma.SortOrder } } = { updatedAt: 'desc' }
+    orderBy:
+      | { updatedAt?: Prisma.SortOrder }
+      | { reviews: { _count: Prisma.SortOrder } } = { updatedAt: "desc" }
   ) => {
     const products = await prisma.product.findMany({
       orderBy,
@@ -196,31 +239,38 @@ export const getAllProducts = unstable_cache(
         quantity: true,
         updatedAt: true,
         images: true,
+        category: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+          },
+        },
         productVariants: {
           select: {
             image: true,
             color: true,
             size: true,
-            isDefault: true
-          }
+            isDefault: true,
+          },
         },
         _count: {
           select: {
             reviews: {
               where: {
-                isApproved: true
-              }
-            }
-          }
-        }
+                isApproved: true,
+              },
+            },
+          },
+        },
       },
-    })
+    });
     return mapProductsWithReviews(products as any[]);
   },
-  ['products'], { tags: ['products'] }
+  ["products-all"],
+  { tags: ["products"] }
 );
 
-// GET PRODUCT BY SLUG
 export const getProductBySlug = async (slug: string) => {
   const product = await prisma.product.findUnique({
     where: { slug },
@@ -245,23 +295,23 @@ export const getProductBySlug = async (slug: string) => {
           image: true,
           color: true,
           size: true,
-          isDefault: true
-        }
+          isDefault: true,
+        },
       },
       _count: {
         select: {
           reviews: {
             where: {
-              isApproved: true
-            }
-          }
-        }
+              isApproved: true,
+            },
+          },
+        },
       },
       additionalInformation: {
         select: {
           name: true,
-          description: true
-        }
+          description: true,
+        },
       },
       customAttributes: {
         select: {
@@ -269,10 +319,10 @@ export const getProductBySlug = async (slug: string) => {
           attributeValues: {
             select: {
               id: true,
-              title: true
-            }
-          }
-        }
+              title: true,
+            },
+          },
+        },
       },
       body: true,
       reviews: {
@@ -280,8 +330,8 @@ export const getProductBySlug = async (slug: string) => {
           name: true,
           comment: true,
           email: true,
-          ratings: true
-        }
+          ratings: true,
+        },
       },
       tags: true,
       offers: true,
@@ -293,11 +343,10 @@ export const getProductBySlug = async (slug: string) => {
     price: product?.price.toNumber(),
     discountedPrice: product?.discountedPrice ? product.discountedPrice.toNumber() : null,
     reviews: product?._count.reviews,
-  }
+  };
   return transformProduct;
-}
+};
 
-// GET PRODUCT BY ID
 export const getProductById = async (productId: string) => {
   const product = await prisma.product.findUnique({
     where: { id: productId },
@@ -321,18 +370,17 @@ export const getProductById = async (productId: string) => {
         },
       },
     },
-  })
+  });
   const transformProduct = {
     ...product,
     price: product?.price.toNumber(),
-    discountedPrice: product?.discountedPrice ? product.discountedPrice.toNumber() : null
-  }
+    discountedPrice: product?.discountedPrice ? product.discountedPrice.toNumber() : null,
+  };
   return transformProduct;
 };
 
-
 export const getRelatedProducts = unstable_cache(
-  async (category: string, tags: string[] | undefined, currentProductId: string,productTitle:string) => {
+  async (category: string, tags: string[] | undefined, currentProductId: string, productTitle: string) => {
     const products = await prisma.product.findMany({
       select: {
         id: true,
@@ -344,10 +392,10 @@ export const getRelatedProducts = unstable_cache(
         quantity: true,
         updatedAt: true,
         tags: true,
-        category:{
+        category: {
           select: {
-            title: true
-          }
+            title: true,
+          },
         },
         productVariants: {
           select: {
@@ -369,39 +417,38 @@ export const getRelatedProducts = unstable_cache(
       },
       where: {
         id: {
-          not: currentProductId, // Exclude the current product
+          not: currentProductId,
         },
         OR: [
           {
-            category:{
+            category: {
               title: {
                 contains: category,
-                mode: 'insensitive',
+                mode: "insensitive",
               },
-            }
+            },
           },
           {
             tags: {
               hasSome: tags,
-            }
+            },
           },
           {
             title: {
               contains: productTitle,
-              mode: 'insensitive',
-            }
-          }
-        ]
+              mode: "insensitive",
+            },
+          },
+        ],
       },
-      
       orderBy: {
-        updatedAt: 'desc',
+        updatedAt: "desc",
       },
-      take: 8, // or however many related items you want
+      take: 8,
     });
 
     return mapProductsWithReviews(products as any[]);
   },
-  ['related-products'],
-  { tags: ['products'] }
+  ["related-products"],
+  { tags: ["products", "related-products"] }
 );

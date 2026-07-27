@@ -11,6 +11,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Missing required fields." }, { status: 400 });
     }
 
+    if (password.length < 6) {
+      return NextResponse.json(
+        { message: "Password must be at least 6 characters." },
+        { status: 400 }
+      );
+    }
+
     const existingUser = await prismaClientInstance.user.findUnique({
       where: { email },
     });

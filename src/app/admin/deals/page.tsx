@@ -1,3 +1,4 @@
+import { createPageMetadata } from "@/lib/metadata";
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -5,9 +6,9 @@ import { prismaClientInstance } from "@/lib/prismaDB";
 import AdminSidebar from "@/components/Admin/AdminSidebar";
 import AdminDealsClient from "@/components/Admin/AdminDealsClient";
 
-export const metadata: Metadata = {
-  title: "Deals of the Day | ROXY TECH",
-};
+export async function generateMetadata() {
+  return createPageMetadata("Deals of the Day");
+}
 
 export default async function AdminDealsPage() {
   const session = await getServerSession(authOptions);

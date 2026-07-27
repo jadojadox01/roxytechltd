@@ -1,16 +1,26 @@
 "use client";
 
 import React, { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+
+function getRedirectPath(role?: string | null, callbackUrl?: string | null) {
+  if (callbackUrl && callbackUrl.startsWith("/") && !callbackUrl.startsWith("//")) {
+    return callbackUrl;
+  }
+  if (role === "ADMIN") return "/admin/dashboard";
+  if (role === "STORE_KEEPER") return "/storekeeper/dashboard";
+  return "/";
+}
 
 export default function SignInPage() {
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -35,14 +45,13 @@ export default function SignInPage() {
         return;
       }
 
-      // Check session role and redirect accordingly
-      const session = await getSession();
-      if (session?.user?.role === "ADMIN") {
-        router.replace("/admin/dashboard");
-      } else {
-        router.replace("/");
-      }
-    } catch (err) {
+      // Fetch fresh session after login (getSession() can be stale immediately after signIn)
+      const sessionRes = await fetch("/api/auth/session");
+      const session = await sessionRes.json();
+      const redirectPath = getRedirectPath(session?.user?.role, callbackUrl);
+
+      window.location.href = redirectPath;
+    } catch {
       setError("An unexpected error occurred.");
       setLoading(false);
     }
@@ -103,7 +112,7 @@ export default function SignInPage() {
         </form>
 
         <div className="mt-6 text-center text-sm text-slate-600">
-          Don’t have an account? <a href="/signup" className="text-slate-900 font-medium">Create one</a>
+          Don&apos;t have an account? <a href="/signup" className="text-slate-900 font-medium">Create one</a>
         </div>
       </div>
     </main>

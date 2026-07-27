@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaClientInstance } from "@/lib/prismaDB";
-import { revalidateTag } from "next/cache";
+import { revalidateProductCaches } from "@/lib/revalidate-products";
+import { requireStaff } from "@/lib/rbac";
+import { logActivity, getRequestMeta } from "@/lib/activity-log";
 import { promises as fs } from "fs";
 import path from "path";
 
@@ -19,6 +19,8 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id:string }> }
 ){
+  const { error } = await requireStaff();
+  if (error) return error;
 
   try {
 
@@ -102,27 +104,15 @@ export async function PATCH(
 try{
 
 
-const session =
-await getServerSession(authOptions);
-
-
-
-if(!session?.user || session.user.role !== "ADMIN"){
-
-return NextResponse.json(
-{
-error:"Unauthorized"
-},
-{
-status:403
-}
-);
-
-}
-
-
+const { session, error: authError } = await requireStaff();
+if (authError) return authError;
 
 const {id}=await params;
+
+const existingProduct = await prismaClientInstance.product.findUnique({ where: { id } });
+if (!existingProduct) {
+  return NextResponse.json({ error: "Product not found" }, { status: 404 });
+}
 
 
 
@@ -465,19 +455,38 @@ isDefault:index===0
 
 
 
-revalidateTag(
-"products",
-"max"
-);
+const meta = getRequestMeta(req);
+const priceChanged = updateData.price !== undefined && String(updateData.price) !== String(existingProduct.price);
 
+await logActivity({
+  userId: session!.user.id,
+  userName: session!.user.name || session!.user.email,
+  userRole: session!.user.role,
+  action: priceChanged ? "PRODUCT_PRICE_CHANGED" : "PRODUCT_UPDATED",
+  module: "PRODUCT",
+  entityId: id,
+  entityName: updated.title,
+  description: priceChanged
+    ? `Price changed for ${updated.title}`
+    : `Updated product ${updated.title}`,
+  oldValue: {
+    title: existingProduct.title,
+    price: Number(existingProduct.price),
+    quantity: existingProduct.quantity,
+  },
+  newValue: {
+    title: updated.title,
+    price: Number(updated.price),
+    quantity: updated.quantity,
+  },
+  ...meta,
+});
 
+revalidateProductCaches();
 
 return NextResponse.json(updated);
 
-
-
 }catch(error:any){
-
 
 console.error(
 "UPDATE PRODUCT ERROR",
@@ -528,31 +537,10 @@ export async function DELETE(
 try{
 
 
-const session =
-await getServerSession(authOptions);
-
-
-
-if(!session?.user || session.user.role !== "ADMIN"){
-
-
-return NextResponse.json(
-{
-error:"Unauthorized"
-},
-{
-status:403
-}
-);
-
-
-}
-
-
+const { session, error: authError } = await requireStaff();
+if (authError) return authError;
 
 const {id}=await params;
-
-
 
 const product =
 await prismaClientInstance.product.findUnique({
@@ -669,12 +657,21 @@ id
 
 
 
-revalidateTag(
-"products",
-"max"
-);
+const meta = getRequestMeta(_req);
+await logActivity({
+  userId: session!.user.id,
+  userName: session!.user.name || session!.user.email,
+  userRole: session!.user.role,
+  action: "PRODUCT_DELETED",
+  module: "PRODUCT",
+  entityId: id,
+  entityName: product.title,
+  description: `Deleted product ${product.title}`,
+  oldValue: { title: product.title, price: Number(product.price) },
+  ...meta,
+});
 
-
+revalidateProductCaches();
 
 return NextResponse.json(
 {

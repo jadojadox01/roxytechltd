@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
 import CartPageContent from "@/components/Cart/CartPageContent";
 
-export const metadata: Metadata = {
-  title: "Cart | ROXY TECH",
-};
+export async function generateMetadata() {
+  return createPageMetadata("Cart");
+}
 
 export default function CartPage() {
   return (

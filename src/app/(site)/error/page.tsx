@@ -1,8 +1,9 @@
+import { createPageMetadata } from "@/lib/metadata";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Error | ROXY TECH",
-};
+export async function generateMetadata() {
+  return createPageMetadata("Error");
+}
 
 export default function ErrorPage() {
   return (

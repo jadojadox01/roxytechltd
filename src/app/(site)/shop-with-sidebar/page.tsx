@@ -1,11 +1,12 @@
+import { createPageMetadata } from "@/lib/metadata";
 import type { Metadata } from "next";
 import { getAllProducts } from "@/get-api-data/product";
 import { getCategories } from "@/get-api-data/category";
 import ShopWithSidebarClient from "./ShopWithSidebarClient";
 
-export const metadata: Metadata = {
-  title: "Shop with Sidebar | ROXY TECH",
-};
+export async function generateMetadata() {
+  return createPageMetadata("Shop");
+}
 
 export const dynamic = "force-dynamic";
 

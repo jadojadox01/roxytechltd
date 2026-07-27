@@ -6,7 +6,7 @@ import type { Product } from "@/types/product";
 const NewArrival = async () => {
   const newProducts = await getNewArrivalsProduct();
   return (
-    <section className="overflow-hidden pt-15">
+    <section className="overflow-hidden">
       <div className="max-w-7xl w-full mx-auto px-4 sm:px-8 xl:px-0">
         <NewArrivalTitle />
 

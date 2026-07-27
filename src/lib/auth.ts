@@ -2,6 +2,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcrypt";
 import { prismaClientInstance } from "@/lib/prismaDB";
+import { logActivity } from "@/lib/activity-log";
 import type { NextAuthOptions } from "next-auth";
 
 export const authOptions: NextAuthOptions = {
@@ -26,13 +27,48 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
+          await logActivity({
+            userName: credentials.email,
+            action: "LOGIN_FAILED",
+            module: "AUTH",
+            description: "Failed login attempt - user not found",
+          });
           return null;
+        }
+
+        if (user.status === "FROZEN") {
+          await logActivity({
+            userId: user.id,
+            userName: user.name || user.email,
+            userRole: user.role,
+            action: "LOGIN_FAILED",
+            module: "AUTH",
+            description: "Login blocked - account frozen",
+          });
+          throw new Error("Account has been disabled. Contact administrator.");
         }
 
         const isValid = await compare(credentials.password, user.password);
         if (!isValid) {
+          await logActivity({
+            userId: user.id,
+            userName: user.name || user.email,
+            userRole: user.role,
+            action: "LOGIN_FAILED",
+            module: "AUTH",
+            description: "Failed login attempt - invalid password",
+          });
           return null;
         }
+
+        await logActivity({
+          userId: user.id,
+          userName: user.name || user.email,
+          userRole: user.role,
+          action: "LOGIN",
+          module: "AUTH",
+          description: `${user.name || user.email} logged in successfully`,
+        });
 
         return {
           id: user.id,
@@ -44,9 +80,27 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
-        token.role = user.role;
+        token.role = (user as { role?: string }).role;
+        if (user.name) token.name = user.name;
+        if (user.email) token.email = user.email;
+      }
+      if (trigger === "update" && session?.user) {
+        if (session.user.name !== undefined) token.name = session.user.name;
+        if (session.user.email !== undefined) token.email = session.user.email;
+      }
+      // Re-fetch role from DB if missing (e.g. old sessions)
+      if (token.sub && !token.role) {
+        const dbUser = await prismaClientInstance.user.findUnique({
+          where: { id: token.sub },
+          select: { role: true, name: true, email: true },
+        });
+        if (dbUser) {
+          token.role = dbUser.role;
+          if (!token.name) token.name = dbUser.name;
+          if (!token.email) token.email = dbUser.email;
+        }
       }
       return token;
     },
@@ -54,6 +108,8 @@ export const authOptions: NextAuthOptions = {
       if (token && session.user) {
         session.user.id = token.sub as string;
         session.user.role = token.role as string;
+        session.user.name = (token.name as string | null) ?? session.user.name;
+        session.user.email = (token.email as string | null) ?? session.user.email;
       }
       return session;
     },

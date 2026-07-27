@@ -12,15 +12,15 @@ import QuickLinks from "./QuickLinks";
 import { getSiteSettings } from "@/get-api-data/site-settings";
 import { getHeaderSettings } from "@/get-api-data/header-setting";
 import { getCategories } from "@/get-api-data/category";
+import { getSiteName } from "@/get-api-data/seo-setting";
 
 const Footer = async () => {
-  const [siteSettings, headerSettings, categories] = await Promise.all([
+  const [siteSettings, headerSettings, categories, siteName] = await Promise.all([
     getSiteSettings(),
     getHeaderSettings(),
     getCategories(),
+    getSiteName(),
   ]);
-
-  const siteName = (headerSettings as any)?.siteName || "ROXY TECH";
   const address = siteSettings?.contactAddress || null;
   const phone = siteSettings?.contactPhone || null;
   const email = siteSettings?.contactEmail || null;
@@ -124,7 +124,7 @@ const Footer = async () => {
             <h2 className="mb-7.5 text-xl font-semibold text-dark">Categories</h2>
             {footerCategories.length > 0 ? (
               <ul className="flex flex-col gap-3.5">
-                {footerCategories.map((category) => (
+                {footerCategories.map((category: { id: string; title: string; slug: string }) => (
                   <li key={category.id}>
                     <Link
                       className="text-base text-dark-3 duration-200 ease-out hover:text-teal"
@@ -177,7 +177,7 @@ const Footer = async () => {
         </div>
       </div>
 
-      <FooterBottom />
+      <FooterBottom siteName={siteName} />
     </footer>
   );
 };

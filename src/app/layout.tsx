@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const site_name = await getSiteName();
   return {
     title: `${seoSettings?.siteTitle || "Home Page"} | ${site_name}`,
-    description: seoSettings?.metadescription || "ROXY TECH — great products at great prices. Shop the latest tech and everyday essentials.",
+    description: seoSettings?.metadescription || `Shop quality products at ${site_name}.`,
     keywords: seoSettings?.metaKeywords || "e-commerce, online store",
     openGraph: {
       images: seoSettings?.metaImage ? [seoSettings.metaImage] : [],

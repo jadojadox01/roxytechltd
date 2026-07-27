@@ -1,8 +1,9 @@
+import { createPageMetadata } from "@/lib/metadata";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Mail Success | ROXY TECH",
-};
+export async function generateMetadata() {
+  return createPageMetadata("Mail Success");
+}
 
 export default function MailSuccessPage() {
   return (

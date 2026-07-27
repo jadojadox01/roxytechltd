@@ -6,6 +6,10 @@ export type IHeroSlider = {
   discountRate: number;
   slug: string;
   productId: string;
+  headline?: string | null;
+  description?: string | null;
+  ctaLabel?: string | null;
+  sortOrder?: number;
   createdAt: Date;
   updatedAt: Date;
   product: {
@@ -14,7 +18,7 @@ export type IHeroSlider = {
     title: string;
     slug: string;
     shortDescription: string;
-  }
+  };
 };
 
 export type IHeroBanner = {
@@ -24,6 +28,8 @@ export type IHeroBanner = {
   subtitle?: string | null;
   slug: string;
   productId: string;
+  ctaLabel?: string | null;
+  sortOrder?: number;
   createdAt: Date;
   updatedAt: Date;
   product: {
@@ -31,5 +37,5 @@ export type IHeroBanner = {
     discountedPrice?: number | null;
     title: string;
     slug: string;
-  }
-}
+  };
+};

@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prismaClientInstance } from "@/lib/prismaDB";
-import { revalidateTag } from "next/cache";
+import { revalidateProductCaches } from "@/lib/revalidate-products";
 import cloudinary from "@/lib/cloudinary";
+import { requireStaff } from "@/lib/rbac";
+import { logActivity, getRequestMeta } from "@/lib/activity-log";
 
 export const runtime = "nodejs";
 
 export async function GET() {
+  const { error } = await requireStaff();
+  if (error) return error;
+
   try {
     const products = await prismaClientInstance.product.findMany({
       orderBy: { updatedAt: "desc" },
@@ -36,14 +39,8 @@ export async function POST(req: Request) {
 
   try {
 
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 403 }
-      );
-    }
+    const { session, error: authError } = await requireStaff();
+    if (authError) return authError;
 
 
     const contentType = req.headers.get("content-type") || "";
@@ -316,9 +313,27 @@ export async function POST(req: Request) {
 
 
 
-    revalidateTag("products", "max");
+    await prismaClientInstance.inventory.upsert({
+      where: { productId: product.id },
+      update: { currentStock: resolvedQuantity },
+      create: { productId: product.id, currentStock: resolvedQuantity },
+    });
 
+    const meta = getRequestMeta(req);
+    await logActivity({
+      userId: session!.user.id,
+      userName: session!.user.name || session!.user.email,
+      userRole: session!.user.role,
+      action: "PRODUCT_CREATED",
+      module: "PRODUCT",
+      entityId: product.id,
+      entityName: product.title,
+      description: `Created product ${product.title}`,
+      newValue: { title: product.title, price: parsedPrice, quantity: resolvedQuantity },
+      ...meta,
+    });
 
+    revalidateProductCaches();
 
     return NextResponse.json(product);
 

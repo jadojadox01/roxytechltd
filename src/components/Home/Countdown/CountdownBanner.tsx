@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { CountdownTimer } from "./CountdownTimer";
 import { Countdown } from "@prisma/client";
+import { ClockIcon } from "@/assets/icons/home";
+import { ArrowRightIcon } from "@/assets/icons";
 
 interface CountdownBannerProps {
   data: Countdown & { product: { title: string } };
@@ -12,28 +14,34 @@ const CountdownBanner = ({ data }: CountdownBannerProps) => {
   if (!data) return null;
 
   return (
-    <section className="py-20 overflow-hidden">
-      <div className="w-full px-4 mx-auto max-w-7xl sm:px-8 xl:px-0">
-        <div className="relative overflow-hidden z-1 rounded-xl bg-gray-2 p-4 sm:p-7.5 lg:p-10 xl:p-15">
-          <div className="max-w-[422px] w-full">
-            <span className="block font-medium lg text-teal mb-2.5">
+    <section className="overflow-hidden">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-8 xl:px-0">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-dark via-dark-2 to-teal-dark p-6 sm:p-10 lg:p-14">
+          {/* Decorative orbs */}
+          <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-teal/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 left-1/3 h-48 w-48 rounded-full bg-blue/20 blur-3xl" />
+
+          <div className="relative z-10 max-w-lg">
+            <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-teal">
+              <ClockIcon className="h-3.5 w-3.5" />
               {data.subtitle}
             </span>
 
-            <h2 className="mb-3 text-xl font-semibold text-dark lg:text-heading-4 xl:text-heading-3">
+            <h2 className="mb-3 text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
               {data.title}
             </h2>
-            <p className="text-base font-normal text-dark-3">
-              {data?.product?.title}
-            </p>
+            <p className="text-base text-white/70">{data?.product?.title}</p>
 
-            <CountdownTimer />
+            <div className="my-8">
+              <CountdownTimer variant="dark" />
+            </div>
 
             <Link
               href="/shop-with-sidebar"
-              className="inline-flex font-medium text-custom-sm text-white bg-teal py-3 px-9.5 rounded-lg ease-out duration-200 hover:bg-teal-dark mt-8"
+              className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal to-blue px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-teal/25 transition hover:shadow-teal/40"
             >
-              Check it Out!
+              Shop the Deal
+              <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
 
@@ -48,16 +56,17 @@ const BackgroundImages = ({ data }: CountdownBannerProps) => (
   <>
     <Image
       src="/images/countdown/countdown-bg.png"
-      alt="bg shapes"
-      className="absolute bottom-0 right-0 hidden sm:block -z-1"
+      alt=""
+      aria-hidden
+      className="absolute bottom-0 right-0 -z-0 hidden opacity-40 sm:block"
       width={737}
       height={482}
     />
     {data.countdownImage && (
       <Image
         src={data.countdownImage}
-        alt="product"
-        className="absolute hidden lg:block right-4 xl:right-33 bottom-4 xl:bottom-14 -z-1"
+        alt={data.product?.title || "Featured product"}
+        className="absolute bottom-4 right-4 -z-0 hidden max-h-[280px] w-auto object-contain drop-shadow-2xl lg:block xl:right-16 xl:bottom-8"
         width={316}
         height={370}
       />

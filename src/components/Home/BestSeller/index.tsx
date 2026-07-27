@@ -19,12 +19,15 @@ const BestSeller = async () => {
             ))}
         </div>
 
-        <div className="text-center mt-12.5">
+        <div className="mt-10 text-center sm:mt-12">
           <Link
             href="/shop-without-sidebar"
-            className="inline-flex font-semibold text-custom-sm py-3 px-7 sm:px-12.5 rounded-full border-blue border text-blue ease-out duration-200 hover:bg-blue hover:text-white"
+            className="group inline-flex items-center gap-2 rounded-full border-2 border-blue px-8 py-3 text-sm font-semibold text-blue transition hover:bg-blue hover:text-white"
           >
-            View All
+            View All Products
+            <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
           </Link>
         </div>
       </div>

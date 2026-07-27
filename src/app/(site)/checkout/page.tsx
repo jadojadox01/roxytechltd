@@ -1,12 +1,13 @@
+import { createPageMetadata } from "@/lib/metadata";
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import CheckoutForm from "@/components/Checkout/CheckoutForm";
 import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "Checkout | ROXY TECH",
-};
+export async function generateMetadata() {
+  return createPageMetadata("Checkout");
+}
 
 export default async function CheckoutPage() {
   const session = await getServerSession(authOptions);

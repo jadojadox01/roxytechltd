@@ -2,6 +2,8 @@ import { getCategories } from "@/get-api-data/category";
 import { Category } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
+import SectionHeader from "../shared/SectionHeader";
+import { ArrowRightIcon } from "@/assets/icons";
 
 const resolveImage = (image: string | null) => {
   if (image && image.trim()) {
@@ -16,50 +18,46 @@ const CategoryGrid = async () => {
 
   if (!categories || categories.length === 0) return null;
 
-  const items = categories.slice(0, 12);
+  const items = categories.slice(0, 8);
 
   return (
-    <section className="overflow-hidden pt-15">
-      <div className="w-full px-4 mx-auto max-w-7xl sm:px-8 xl:px-0">
-        <div className="mb-8 flex items-end justify-between">
-          <div>
-            <h2 className="text-xl font-bold xl:text-heading-4 text-dark">
-              Shop by Category
-            </h2>
-            <p className="mt-1 text-base text-dark-3">
-              Browse our most popular collections.
-            </p>
-          </div>
-          <Link
-            href="/shop-with-sidebar"
-            className="hidden shrink-0 text-sm font-medium text-teal transition hover:text-teal-dark sm:inline"
-          >
-            View all
-          </Link>
-        </div>
+    <section className="overflow-hidden">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-8 xl:px-0">
+        <SectionHeader
+          eyebrow="Browse"
+          title="Shop by Category"
+          description="Explore our most popular collections and find exactly what you need."
+          href="/shop-with-sidebar"
+        />
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
           {items.map((category) => (
             <Link
               key={category.id}
               href={`/categories/${category.slug}`}
-              className="group flex flex-col items-center rounded-2xl border border-gray-3 bg-white p-4 text-center transition hover:-translate-y-1 hover:border-teal hover:shadow-1"
+              className="group relative overflow-hidden rounded-2xl border border-gray-3 bg-white transition duration-300 hover:-translate-y-1 hover:border-teal/40 hover:shadow-lg hover:shadow-teal/10"
             >
-              <div className="mb-3 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-gray-1">
-                <Image
-                  src={resolveImage(category.image)}
-                  alt={category.title}
-                  width={64}
-                  height={64}
-                  className="h-16 w-16 object-cover"
-                />
+              <div className="absolute inset-0 bg-gradient-to-t from-dark/60 via-dark/10 to-transparent opacity-0 transition duration-300 group-hover:opacity-100" />
+              <div className="flex flex-col items-center p-5 text-center sm:p-6">
+                <div className="mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-gray-1 ring-1 ring-gray-3/50 transition duration-300 group-hover:ring-teal/30 sm:h-24 sm:w-24">
+                  <Image
+                    src={resolveImage(category.image)}
+                    alt={category.title}
+                    width={80}
+                    height={80}
+                    className="h-16 w-16 object-cover transition duration-500 group-hover:scale-110 sm:h-20 sm:w-20"
+                  />
+                </div>
+                <h3 className="line-clamp-1 text-sm font-semibold text-dark transition group-hover:text-teal sm:text-base">
+                  {category.title}
+                </h3>
+                <span className="mt-1 text-xs text-dark-4">
+                  {category.productCount || 0} products
+                </span>
               </div>
-              <h3 className="line-clamp-1 text-sm font-medium text-dark transition group-hover:text-teal">
-                {category.title}
-              </h3>
-              <span className="mt-0.5 text-xs text-dark-4">
-                {category.productCount || 0} items
-              </span>
+              <div className="absolute bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-teal text-white opacity-0 transition duration-300 group-hover:opacity-100">
+                <ArrowRightIcon className="h-4 w-4" />
+              </div>
             </Link>
           ))}
         </div>

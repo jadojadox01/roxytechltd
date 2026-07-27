@@ -26,6 +26,9 @@ export const wishlist = createSlice({
 
       if (existingItem) {
         state.items = state.items.filter((item) => item.id !== id);
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.setItem('wishlistItems', JSON.stringify(state.items));
+        }
         toast.error('Product removed from wishlist!');
         return;
       } else {

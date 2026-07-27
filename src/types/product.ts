@@ -11,6 +11,11 @@ export type Product = {
   reviews: number;
   shortDescription: string;
   images?: string[];
+  category?: {
+    id: string;
+    title: string;
+    slug: string;
+  } | null;
   productVariants: {
     color: string;
     image: string;

@@ -49,10 +49,7 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
 
     // Filter by category
     if (selectedCategory) {
-      result = result.filter((p) => {
-        const cat = categories.find((c) => c.slug === selectedCategory);
-        return cat;
-      });
+      result = result.filter((p) => p.category?.slug === selectedCategory);
     }
 
     // Filter by price range
@@ -102,6 +99,17 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
 
   const hasActiveFilters = selectedCategory || selectedPriceRange;
 
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const product of products) {
+      const slug = product.category?.slug;
+      if (slug) {
+        counts[slug] = (counts[slug] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }, [products]);
+
   return (
     <div className="flex flex-col gap-6 lg:flex-row">
       {/* Mobile sidebar toggle */}
@@ -149,7 +157,9 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
                     }`}
                   >
                     {cat.title}
-                    <span className="ml-2 text-xs text-slate-400">({cat.productCount})</span>
+                    <span className="ml-2 text-xs text-slate-400">
+                      ({categoryCounts[cat.slug] ?? cat.productCount ?? 0})
+                    </span>
                   </button>
                 </li>
               ))}

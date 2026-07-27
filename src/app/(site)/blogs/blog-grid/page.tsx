@@ -1,8 +1,9 @@
+import { createPageMetadata } from "@/lib/metadata";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Blog Grid | ROXY TECH",
-};
+export async function generateMetadata() {
+  return createPageMetadata("Blog Grid");
+}
 
 export default function BlogGridPage() {
   return (

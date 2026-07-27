@@ -9,7 +9,13 @@ export interface TimeState {
   seconds: number;
 }
 
-export const CountdownTimer = ({ targetDate }: { targetDate?: string }) => {
+export const CountdownTimer = ({
+  targetDate,
+  variant = "light",
+}: {
+  targetDate?: string;
+  variant?: "light" | "dark";
+}) => {
   const [date, setDate] = useState<TimeState>({
     days: 0,
     hours: 0,
@@ -36,11 +42,11 @@ export const CountdownTimer = ({ targetDate }: { targetDate?: string }) => {
   }, [targetDate]);
 
   return (
-    <div className="flex flex-wrap gap-6 mt-6">
-      <TimeDisplay value={date.days} label="Days" />
-      <TimeDisplay value={date.hours} label="Hours" />
-      <TimeDisplay value={date.minutes} label="Minutes" />
-      <TimeDisplay value={date.seconds} label="Seconds" />
+    <div className="flex flex-wrap gap-4 sm:gap-6">
+      <TimeDisplay value={date.days} label="Days" variant={variant} />
+      <TimeDisplay value={date.hours} label="Hours" variant={variant} />
+      <TimeDisplay value={date.minutes} label="Minutes" variant={variant} />
+      <TimeDisplay value={date.seconds} label="Seconds" variant={variant} />
     </div>
   );
 }; 

@@ -5,10 +5,14 @@ import { prismaClientInstance } from "@/lib/prismaDB";
 import { promises as fs } from "fs";
 import path from "path";
 import { revalidateTag } from "next/cache";
+import { requireStaff } from "@/lib/rbac";
 
 export const runtime = "nodejs";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { error } = await requireStaff();
+  if (error) return error;
+
   const { id } = await params;
   const category = await prismaClientInstance.category.findUnique({ where: { id } });
   if (!category) return NextResponse.json({ error: "Not found" }, { status: 404 });

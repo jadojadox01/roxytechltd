@@ -71,7 +71,7 @@ type Props = {
 };
 
 export default function ProductDetailClient({ product, reviewData }: Props) {
-  const { addItem } = useCart();
+  const { addItem, buyNow } = useCart();
   const [selectedImage, setSelectedImage] = useState(
     (product.productVariants ?? []).find((v) => v.isDefault)?.image ||
       (product.productVariants ?? [])[0]?.image ||
@@ -103,8 +103,22 @@ export default function ProductDetailClient({ product, reviewData }: Props) {
       price: effectivePrice,
       quantity,
       image: selectedImage,
+      slug: product.slug,
+      availableQuantity: product.quantity,
     });
     toast.success(`${product.title} added to cart`);
+  };
+
+  const handleBuyNow = () => {
+    buyNow({
+      id: product.id,
+      name: product.title,
+      price: effectivePrice,
+      quantity,
+      image: selectedImage,
+      slug: product.slug,
+      availableQuantity: product.quantity,
+    });
   };
 
   const handleSubmitReview = async (e: React.FormEvent) => {
@@ -282,33 +296,41 @@ export default function ProductDetailClient({ product, reviewData }: Props) {
               </div>
             ))}
 
-            {/* Quantity + Add to Cart */}
+            {/* Quantity + Add to Cart / Buy Now */}
             {product.quantity > 0 && (
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex items-center rounded-lg border border-slate-300 overflow-hidden">
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex items-center rounded-lg border border-slate-300 overflow-hidden">
+                    <button
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      className="px-3 py-2.5 text-slate-600 hover:bg-slate-50 transition font-bold text-lg"
+                      aria-label="Decrease quantity"
+                    >
+                      −
+                    </button>
+                    <span className="min-w-[48px] text-center text-sm font-semibold text-slate-900 py-2.5 border-x border-slate-300">
+                      {quantity}
+                    </span>
+                    <button
+                      onClick={() => setQuantity((q) => Math.min(product.quantity, q + 1))}
+                      className="px-3 py-2.5 text-slate-600 hover:bg-slate-50 transition font-bold text-lg"
+                      aria-label="Increase quantity"
+                    >
+                      +
+                    </button>
+                  </div>
                   <button
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="px-3 py-2.5 text-slate-600 hover:bg-slate-50 transition font-bold text-lg"
-                    aria-label="Decrease quantity"
+                    onClick={handleAddToCart}
+                    className="flex-1 sm:flex-none rounded-lg border border-[#0071CE] bg-white px-6 py-2.5 text-sm font-semibold text-[#0071CE] transition hover:bg-[#0071CE]/5 sm:px-8"
                   >
-                    −
-                  </button>
-                  <span className="min-w-[48px] text-center text-sm font-semibold text-slate-900 py-2.5 border-x border-slate-300">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={() => setQuantity((q) => Math.min(product.quantity, q + 1))}
-                    className="px-3 py-2.5 text-slate-600 hover:bg-slate-50 transition font-bold text-lg"
-                    aria-label="Increase quantity"
-                  >
-                    +
+                    Add to Cart
                   </button>
                 </div>
                 <button
-                  onClick={handleAddToCart}
-                  className="flex-1 sm:flex-none rounded-lg bg-[#0071CE] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#005fb0] sm:px-8"
+                  onClick={handleBuyNow}
+                  className="w-full rounded-lg bg-[#02AAA4] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#028f86] sm:w-auto sm:px-8"
                 >
-                  Add to Cart
+                  Buy Now
                 </button>
               </div>
             )}

@@ -1,8 +1,9 @@
+import { createPageMetadata } from "@/lib/metadata";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy | ROXY TECH",
-};
+export async function generateMetadata() {
+  return createPageMetadata("Privacy Policy");
+}
 
 export default function PrivacyPolicyPage() {
   return (

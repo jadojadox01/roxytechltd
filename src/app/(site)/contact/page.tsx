@@ -1,11 +1,10 @@
-import type { Metadata } from "next";
 import { getSiteSettings } from "@/get-api-data/site-settings";
+import { createPageMetadata } from "@/lib/metadata";
 import ContactForm from "./ContactForm";
 
-export const metadata: Metadata = {
-  title: "Contact Us | ROXY TECH",
-  description: "Get in touch with us. We'd love to hear from you.",
-};
+export async function generateMetadata() {
+  return createPageMetadata("Contact Us", "Get in touch with us.");
+}
 
 export default async function ContactPage() {
   const settings = await getSiteSettings();

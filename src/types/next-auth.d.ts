@@ -15,3 +15,11 @@ declare module "next-auth" {
     role?: string | null;
   }
 }
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    role?: string;
+    name?: string | null;
+    email?: string | null;
+  }
+}

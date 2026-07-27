@@ -1,29 +1,73 @@
 import { getHeroBanners, getHeroSliders } from "@/get-api-data/hero";
-import { IHeroBanner } from "@/types/hero";
+import HeroSlideshow, { HeroSlide } from "./HeroSlideshow";
 import HeroBannerItem from "./HeroBannerItem";
-import HeroCarousel from "./HeroCarousel";
+import { IHeroBanner } from "@/types/hero";
+
+function buildSlides(
+  sliders: Awaited<ReturnType<typeof getHeroSliders>>,
+  banners: IHeroBanner[]
+): HeroSlide[] {
+  const fromSliders: HeroSlide[] = (sliders ?? []).map((s) => ({
+    id: `slider-${s.id}`,
+    eyebrow: s.sliderName || "Featured Deal",
+    title: s.headline || s.product?.title || "Special Offer",
+    description:
+      s.description ||
+      s.product?.shortDescription?.slice(0, 140) ||
+      "Limited time offer — shop now before it's gone.",
+    image: s.sliderImage,
+    href: `/products/${s.product?.slug}`,
+    cta: s.ctaLabel || "Shop Now",
+    discount: s.discountRate,
+  }));
+
+  const fromBanners: HeroSlide[] = banners.map((b) => ({
+    id: `banner-${b.id}`,
+    eyebrow: b.subtitle || "Limited Offer",
+    title: b.bannerName || b.product?.title || "Featured Product",
+    description: "Exclusive offer available for a limited time only.",
+    image: b.bannerImage,
+    href: `/products/${b.product?.slug}`,
+    cta: b.ctaLabel || "View Deal",
+    priceLabel:
+      b.product?.discountedPrice != null
+        ? `From ${Number(b.product.discountedPrice).toLocaleString()} RWF`
+        : null,
+  }));
+
+  return [...fromSliders, ...fromBanners];
+}
 
 const Hero = async () => {
-  const data: IHeroBanner[] = await getHeroBanners();
-  const sliders = await getHeroSliders();
+  let banners: IHeroBanner[] = [];
+  let sliders: Awaited<ReturnType<typeof getHeroSliders>> = [];
+
+  try {
+    [banners, sliders] = await Promise.all([getHeroBanners(), getHeroSliders()]);
+  } catch (error) {
+    console.error("[Hero]", error);
+  }
+
+  const slides = buildSlides(sliders, banners);
+  if (slides.length === 0) return null;
+
+  const sideBanners = banners.slice(0, 2);
 
   return (
-    <section className="overflow-hidden pb-12 pt-40 bg-[#F7F7F7] ">
-      <div className="w-full px-4 mx-auto max-w-7xl sm:px-8 xl:px-0">
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-          <div className="w-full xl:col-span-2">
-            <div className="relative overflow-hidden bg-white border z-1 border-gray-2 rounded-2xl">
-              <HeroCarousel sliders={sliders} />
-            </div>
-          </div>
+    <section className="relative">
+      <div className="pt-[7.5rem] md:pt-[8.5rem]">
+        <HeroSlideshow slides={slides} />
+      </div>
 
-          <div className="flex flex-col justify-between w-full gap-5 xl:col-span-1 sm:flex-row xl:flex-col">
-            {data.map((bannerItem, key: number) => (
-              <HeroBannerItem key={key} bannerItem={bannerItem} />
+      {sideBanners.length > 0 && (
+        <div className="mx-auto mt-6 w-full max-w-7xl px-4 sm:px-8 xl:px-0">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {sideBanners.map((bannerItem) => (
+              <HeroBannerItem key={bannerItem.id} bannerItem={bannerItem} />
             ))}
           </div>
         </div>
-      </div>
+      )}
     </section>
   );
 };

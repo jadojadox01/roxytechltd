@@ -52,6 +52,13 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    if (String(name).length > 100 || String(comment).length > 2000) {
+      return NextResponse.json(
+        { error: "Input exceeds maximum length" },
+        { status: 400 }
+      );
+    }
+
     if (ratings < 1 || ratings > 5) {
       return NextResponse.json(
         { error: "Rating must be between 1 and 5" },

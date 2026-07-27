@@ -4,11 +4,14 @@ import { authOptions } from "@/lib/auth";
 import { prismaClientInstance } from "@/lib/prismaDB";
 import { revalidateTag } from "next/cache";
 import cloudinary from "@/lib/cloudinary";
+import { requireStaff } from "@/lib/rbac";
 
 export const runtime = "nodejs";
 
 
 export async function GET() {
+  const { error } = await requireStaff();
+  if (error) return error;
 
   const categories =
     await prismaClientInstance.category.findMany({

@@ -1,54 +1,69 @@
-import { getPrismaModel } from "@/lib/prismaDB";
+import { prisma } from "@/lib/prismaDB";
 import { unstable_cache } from "next/cache";
 
-const seoSettingModel = getPrismaModel("seoSetting");
-const headerSettingModel = getPrismaModel("headerSetting");
-
-// get all seo settings
 export const getSeoSettings = unstable_cache(
   async () => {
-    return await seoSettingModel.findFirst();
+    try {
+      return await prisma.seoSetting.findFirst();
+    } catch (error) {
+      console.error("[getSeoSettings]", error);
+      return null;
+    }
   },
-  ['seo-setting'], { tags: ['seo-setting'] }
+  ["seo-setting"],
+  { tags: ["seo-setting"] }
 );
 
 export const getSiteName = unstable_cache(
   async () => {
-    const siteName = await seoSettingModel.findFirst({
-      select: {
-        siteName: true,
-      },
-    });
-    return siteName ? siteName.siteName : process.env.SITE_NAME ? process.env.SITE_NAME : "ROXY TECH";
+    try {
+      const [header, seo] = await Promise.all([
+        prisma.headerSetting.findFirst({ select: { siteName: true } }),
+        prisma.seoSetting.findFirst({ select: { siteName: true } }),
+      ]);
+      return (
+        header?.siteName?.trim() ||
+        seo?.siteName?.trim() ||
+        process.env.SITE_NAME?.trim() ||
+        "Shop"
+      );
+    } catch (error) {
+      console.error("[getSiteName]", error);
+      return process.env.SITE_NAME?.trim() || "Shop";
+    }
   },
-  ['site-name'], { tags: ['site-name'] }
+  ["site-name"],
+  { tags: ["site-name", "header-setting", "seo-setting"] }
 );
 
-// get logo 
 export const getLogo = unstable_cache(
   async () => {
-    const headerLogo = await headerSettingModel.findFirst({
-      select: {
-        headerLogo: true,
-      },
-    });
-    const logo = headerLogo ? headerLogo.headerLogo : "https://res.cloudinary.com/dc6svbdh9/image/upload/v1746335068/header/tsvfm6pvfwpbpyqdtxwn.svg";
-    return logo;
+    try {
+      const headerLogo = await prisma.headerSetting.findFirst({
+        select: { headerLogo: true },
+      });
+      return headerLogo?.headerLogo || null;
+    } catch (error) {
+      console.error("[getLogo]", error);
+      return null;
+    }
   },
-  ['header-logo'], { tags: ['header-logo'] }
+  ["header-logo"],
+  { tags: ["header-logo"] }
 );
 
-// get email logo
 export const getEmailLogo = unstable_cache(
   async () => {
-    const emailLogo = await headerSettingModel.findFirst({
-      select: {
-        emailLogo: true,
-      },
-    });
-    const logo = emailLogo ? emailLogo.emailLogo : "https://res.cloudinary.com/dc6svbdh9/image/upload/v1746693785/logo_ouegg7.png";
-    return logo;
+    try {
+      const emailLogo = await prisma.headerSetting.findFirst({
+        select: { emailLogo: true },
+      });
+      return emailLogo?.emailLogo || null;
+    } catch (error) {
+      console.error("[getEmailLogo]", error);
+      return null;
+    }
   },
-  ['email-logo'], { tags: ['email-logo'] }
+  ["email-logo"],
+  { tags: ["email-logo"] }
 );
-
