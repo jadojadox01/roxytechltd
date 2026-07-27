@@ -6,11 +6,11 @@ import type { Product } from "@/types/product";
 const NewArrival = async () => {
   const newProducts = await getNewArrivalsProduct();
   return (
-    <section className="overflow-hidden">
-      <div className="max-w-7xl w-full mx-auto px-4 sm:px-8 xl:px-0">
+    <section className="py-2">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-8 xl:px-0">
         <NewArrivalTitle />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-7.5 gap-y-9">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {newProducts.map((item: Product, key: number) => (
             <ProductItem item={item} key={key} />
           ))}

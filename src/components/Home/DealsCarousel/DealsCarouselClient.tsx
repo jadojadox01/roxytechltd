@@ -23,13 +23,13 @@ export default function DealsCarouselClient({ products }: { products: Product[] 
         loop={products.length > 4}
         spaceBetween={20}
         breakpoints={{
-          0: { slidesPerView: 1.2 },
+          0: { slidesPerView: 1.15 },
           480: { slidesPerView: 2 },
-          768: { slidesPerView: 3 },
-          1024: { slidesPerView: 4 },
-          1280: { slidesPerView: 5 },
+          768: { slidesPerView: 2.5 },
+          1024: { slidesPerView: 3 },
+          1280: { slidesPerView: 4 },
         }}
-        className="deals-product-carousel !overflow-visible"
+        className="deals-product-carousel"
       >
         {products.map((item) => (
           <SwiperSlide key={item.id} className="!h-auto pb-2">

@@ -91,9 +91,15 @@ export default function ContactForm() {
     <form
       onSubmit={handleSubmit}
       noValidate
-      className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+      className="rounded-2xl border border-slate-200 bg-white p-6 shadow-lg sm:p-8"
     >
-      <h2 className="text-xl font-semibold text-slate-900 mb-6">Send us a message</h2>
+      <div className="mb-6">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#02AAA4]">Contact form</p>
+        <h2 className="mt-2 text-2xl font-bold text-slate-900">Send us a message</h2>
+        <p className="mt-2 text-sm text-slate-500">
+          We usually respond within one business day.
+        </p>
+      </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
         {/* Name */}
@@ -172,7 +178,7 @@ export default function ContactForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#0071CE] px-7 py-2.5 text-sm font-semibold text-white transition hover:bg-[#005fb0] disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#02AAA4] px-7 py-2.5 text-sm font-semibold text-white transition hover:bg-[#028f86] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? (
             <>

@@ -8,8 +8,8 @@ const BestSeller = async () => {
   const bestSellProducts = await getBestSellingProducts();
 
   return (
-    <section className="overflow-hidden">
-      <div className="w-full px-4 mx-auto max-w-7xl sm:px-8 xl:px-0">
+    <section className="py-2">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-8 xl:px-0">
         <BestSellerSectionTitle />
 
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
