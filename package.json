@@ -75,7 +75,7 @@
     "typescript": "^5.4.3"
   },
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"

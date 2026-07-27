@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 
@@ -14,6 +14,23 @@ function getRedirectPath(role?: string | null, callbackUrl?: string | null) {
 }
 
 export default function SignInPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-[80vh] py-14">
+          <div className="mx-auto max-w-md px-4 sm:px-6">
+            <h1 className="text-3xl font-semibold text-slate-900">Sign in to your account</h1>
+            <p className="mt-3 text-sm text-slate-600">Loading...</p>
+          </div>
+        </main>
+      }
+    >
+      <SignInForm />
+    </Suspense>
+  );
+}
+
+function SignInForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
   const [email, setEmail] = useState("");
