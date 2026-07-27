@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaClientInstance } from "@/lib/prismaDB";
-import { promises as fs } from "fs";
-import path from "path";
 import { revalidateTag } from "next/cache";
+import { uploadImageFile } from "@/lib/upload-image";
 import { requireStaff } from "@/lib/rbac";
 
 export const runtime = "nodejs";
@@ -44,12 +43,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     // Only update image if a new file was actually uploaded
     const imageFile = formData.get("image");
     if (imageFile instanceof File && imageFile.size > 0) {
-      const uploadDir = path.join(process.cwd(), "public", "uploads", "categories");
-      await fs.mkdir(uploadDir, { recursive: true });
-      const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}${path.extname(imageFile.name || ".jpg") || ".jpg"}`;
-      const filePath = path.join(uploadDir, safeName);
-      await fs.writeFile(filePath, Buffer.from(await imageFile.arrayBuffer()));
-      updateData.image = `/uploads/categories/${safeName}`;
+      updateData.image = await uploadImageFile(imageFile, "categories", "category");
     }
     // If no new image file, do NOT touch the image field — keeps existing image
   } else {

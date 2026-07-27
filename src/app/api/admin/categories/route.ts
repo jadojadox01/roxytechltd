@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaClientInstance } from "@/lib/prismaDB";
 import { revalidateTag } from "next/cache";
-import cloudinary from "@/lib/cloudinary";
+import { uploadImageFile } from "@/lib/upload-image";
 import { requireStaff } from "@/lib/rbac";
 
 export const runtime = "nodejs";
@@ -72,51 +72,8 @@ export async function POST(req: Request) {
 
 
 
-    if (imageFile && imageFile instanceof File) {
-
-
-      const buffer =
-        Buffer.from(
-          await imageFile.arrayBuffer()
-        );
-
-
-      const uploadResult =
-        await new Promise<any>((resolve, reject) => {
-
-
-          cloudinary.uploader.upload_stream(
-
-            {
-              folder: "categories",
-            },
-
-
-            (error, result) => {
-
-              if (error) {
-
-                reject(error);
-
-              } else {
-
-                resolve(result);
-
-              }
-
-            }
-
-          ).end(buffer);
-
-
-        });
-
-
-
-      imagePath =
-        uploadResult.secure_url;
-
-
+    if (imageFile && imageFile instanceof File && imageFile.size > 0) {
+      imagePath = await uploadImageFile(imageFile, "categories", "category");
     }
 
 
