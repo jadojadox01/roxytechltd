@@ -8,6 +8,7 @@ import { getMissingCloudinaryVars } from "@/lib/cloudinary-env";
 import { requireStaff } from "@/lib/rbac";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function GET() {
   const { error } = await requireStaff();

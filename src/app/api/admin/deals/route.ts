@@ -6,6 +6,7 @@ import { revalidateTag } from "next/cache";
 import { uploadImageFile } from "@/lib/upload-image";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);

@@ -9,8 +9,7 @@ import { slugify } from "@/lib/slugify";
 
 
 export const runtime = "nodejs";
-
-
+export const maxDuration = 60;
 
 // ==========================
 // GET SINGLE PRODUCT

@@ -8,6 +8,7 @@ import { logActivity, getRequestMeta } from "@/lib/activity-log";
 import { slugify } from "@/lib/slugify";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function GET() {
   const { error } = await requireStaff();

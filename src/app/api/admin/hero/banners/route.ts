@@ -7,6 +7,7 @@ import { createHeroBanner, deleteHeroBanner, listHeroBannersAdmin } from "@/lib/
 import { uploadImageFile } from "@/lib/upload-image";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 function slugify(value: string) {
   return value

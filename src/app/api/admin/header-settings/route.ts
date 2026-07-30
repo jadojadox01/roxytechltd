@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/rbac";
 import { uploadImageFile } from "@/lib/upload-image";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 async function syncSeoSiteName(siteName: string) {
   const seo = await prisma.seoSetting.findFirst();
@@ -22,15 +23,25 @@ async function syncSeoSiteName(siteName: string) {
 }
 
 async function uploadLogo(file: File): Promise<string> {
-  const allowedTypes = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
-  if (!allowedTypes.includes(file.type)) {
+  const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
+  const type = (file.type || "").toLowerCase();
+  const isAllowedType =
+    !type || allowedTypes.includes(type) || type === "image/jpg";
+
+  if (!isAllowedType) {
     throw new Error("Logo must be PNG, JPEG, WEBP, or SVG");
   }
-  if (file.size > 2 * 1024 * 1024) {
-    throw new Error("Logo must be under 2 MB");
+  if (file.size > 4 * 1024 * 1024) {
+    throw new Error("Logo must be under 4 MB");
   }
 
-  return uploadImageFile(file, "header", "logo");
+  try {
+    return await uploadImageFile(file, "header", "logo");
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Cloudinary upload failed";
+    // Surface a clearer branding error for the admin toast.
+    throw new Error(message.startsWith("Image upload failed:") ? message : `Cloudinary upload failed: ${message}`);
+  }
 }
 
 export async function GET() {
