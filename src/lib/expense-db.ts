@@ -275,25 +275,24 @@ export async function updateExpense(
 
 export async function deleteExpense(id: string): Promise<ExpenseRow> {
   await ensureExpenseSchema();
-  const model = expenseModel();
-  if (model) {
-    const deleted = await model.delete({ where: { id } });
-    return {
-      ...deleted,
-      amount: Number(deleted.amount),
-      expenseDate: new Date(deleted.expenseDate),
-      createdAt: new Date(deleted.createdAt),
-      updatedAt: new Date(deleted.updatedAt),
-    };
+  const trimmedId = String(id || "").trim();
+  if (!trimmedId) {
+    throw new Error("Expense id required");
   }
 
-  const rows = await prismaClientInstance.$queryRawUnsafe<RawExpense[]>(
-    `SELECT id, title, category, amount, "expenseDate", notes, "paymentMethod",
-            "createdById", "createdAt", "updatedAt"
-     FROM "Expense" WHERE id = $1`,
-    id
-  );
-  if (!rows[0]) throw new Error("Expense not found");
-  await prismaClientInstance.$executeRawUnsafe(`DELETE FROM "Expense" WHERE id = $1`, id);
+  // Always use SQL so delete works even if the Prisma client is stale on the server.
+  const rows = await prismaClientInstance.$queryRaw<RawExpense[]>`
+    SELECT id, title, category, amount, "expenseDate", notes, "paymentMethod",
+           "createdById", "createdAt", "updatedAt"
+    FROM "Expense" WHERE id = ${trimmedId}
+  `;
+  if (!rows[0]) {
+    throw new Error("Expense not found (it may have already been deleted)");
+  }
+
+  await prismaClientInstance.$executeRaw`
+    DELETE FROM "Expense" WHERE id = ${trimmedId}
+  `;
+
   return mapExpense(rows[0]);
 }

@@ -17,17 +17,27 @@ export async function GET(req: NextRequest) {
     const range = resolvePeriod(period, from, to);
     const summary = await getAccountingSummary(range.from, range.to);
 
-    return NextResponse.json({
-      success: true,
-      period: range.label,
-      from: range.from.toISOString(),
-      to: range.to.toISOString(),
-      ...summary,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        period: range.label,
+        from: range.from.toISOString(),
+        to: range.to.toISOString(),
+        ...summary,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      }
+    );
   } catch (err) {
     console.error("[accounting/summary]", err);
     return NextResponse.json(
-      { success: false, message: "Failed to load accounting summary" },
+      {
+        success: false,
+        message: err instanceof Error ? err.message : "Failed to load accounting summary",
+      },
       { status: 500 }
     );
   }

@@ -64,14 +64,28 @@ export default function AdminAccountingClient() {
     try {
       const params = new URLSearchParams({ period });
       if (period === "custom") {
-        if (from) params.set("from", from);
-        if (to) params.set("to", to);
+        if (!from || !to) {
+          toast.error("Choose both start and end dates for a custom range.");
+          setLoading(false);
+          return;
+        }
+        if (from > to) {
+          toast.error("Start date must be before end date.");
+          setLoading(false);
+          return;
+        }
+        params.set("from", from);
+        params.set("to", to);
       }
+      params.set("_ts", String(Date.now()));
       const res = await fetch(`/api/admin/accounting/summary?${params}`, {
         cache: "no-store",
+        credentials: "include",
       });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || "Failed to load");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || data.error || "Failed to load");
+      }
       setLabel(data.period);
       setTotals(data.totals);
       setDaily(data.daily || []);
@@ -87,8 +101,9 @@ export default function AdminAccountingClient() {
   }, [period, from, to]);
 
   useEffect(() => {
+    if (period === "custom" && (!from || !to)) return;
     void load();
-  }, [load]);
+  }, [load, period, from, to]);
 
   const createExpense = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,13 +112,14 @@ export default function AdminAccountingClient() {
       const res = await fetch("/api/admin/accounting/expenses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           ...form,
           amount: Number(form.amount),
         }),
       });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || "Failed to save");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.message || data.error || "Failed to save");
       toast.success("Expense recorded");
       setForm({
         title: "",
@@ -123,16 +139,26 @@ export default function AdminAccountingClient() {
 
   const deleteExpense = async (id: string) => {
     if (!confirm("Delete this expense?")) return;
-    const res = await fetch(`/api/admin/accounting/expenses?id=${id}`, {
-      method: "DELETE",
-    });
-    const data = await res.json();
-    if (!data.success) {
-      toast.error(data.message || "Delete failed");
-      return;
+    try {
+      const res = await fetch(
+        `/api/admin/accounting/expenses?id=${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ id }),
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || data.error || "Delete failed");
+      }
+      toast.success("Expense deleted");
+      setExpenses((prev) => prev.filter((item) => item.id !== id));
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Delete failed");
     }
-    toast.success("Expense deleted");
-    await load();
   };
 
   const exportUrl = (type: string, format: "pdf" | "xlsx" = exportFormat) => {
@@ -189,8 +215,23 @@ export default function AdminAccountingClient() {
                 onChange={(e) => setTo(e.target.value)}
                 className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
               />
+              <button
+                type="button"
+                onClick={() => void load()}
+                className="rounded-lg border border-[#1c2ea3] bg-white px-4 py-2 text-sm font-semibold text-[#1c2ea3] hover:bg-[#eef2ff]"
+              >
+                Apply filter
+              </button>
             </>
           )}
+          <button
+            type="button"
+            onClick={() => void load()}
+            disabled={loading}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
           <select
             value={exportType}
             onChange={(e) =>

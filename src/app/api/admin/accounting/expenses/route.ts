@@ -165,7 +165,11 @@ export async function DELETE(req: NextRequest) {
   if (error) return error;
 
   try {
-    const id = req.nextUrl.searchParams.get("id");
+    const body = await req.json().catch(() => ({} as { id?: string }));
+    const id =
+      req.nextUrl.searchParams.get("id")?.trim() ||
+      String(body?.id || "").trim();
+
     if (!id) {
       return NextResponse.json(
         { success: false, message: "Expense id required" },
@@ -174,21 +178,28 @@ export async function DELETE(req: NextRequest) {
     }
 
     const expense = await deleteExpense(id);
-    const meta = getRequestMeta(req);
-    await logActivity({
-      userId: session!.user.id,
-      action: "EXPENSE_DELETED",
-      module: "PAYMENT",
-      entityId: expense.id,
-      entityName: expense.title,
-      ...meta,
-    });
 
-    return NextResponse.json({ success: true });
+    try {
+      await logActivity({
+        userId: session!.user.id,
+        action: "EXPENSE_DELETED",
+        module: "PAYMENT",
+        entityId: expense.id,
+        entityName: expense.title,
+        ...getRequestMeta(req),
+      });
+    } catch (logError) {
+      console.error("[expenses DELETE] activity log error:", logError);
+    }
+
+    return NextResponse.json({ success: true, id: expense.id });
   } catch (err) {
     console.error("[expenses DELETE]", err);
     return NextResponse.json(
-      { success: false, message: "Failed to delete expense" },
+      {
+        success: false,
+        message: err instanceof Error ? err.message : "Failed to delete expense",
+      },
       { status: 500 }
     );
   }

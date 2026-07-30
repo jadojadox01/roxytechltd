@@ -11,17 +11,36 @@ export {
   type PeriodKey,
 } from "@/lib/accounting-constants";
 
-
-export function startOfDay(date = new Date()) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+/** Parse YYYY-MM-DD as an inclusive UTC day boundary (avoids server TZ drift on Vercel). */
+export function parseDateOnly(value: string, end = false): Date {
+  const [y, m, d] = value.slice(0, 10).split("-").map(Number);
+  if (!y || !m || !d) {
+    throw new Error("Invalid date");
+  }
+  if (end) {
+    return new Date(Date.UTC(y, m - 1, d, 23, 59, 59, 999));
+  }
+  return new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0));
 }
 
-export function endOfDay(date = new Date()) {
-  const d = new Date(date);
-  d.setHours(23, 59, 59, 999);
-  return d;
+export function startOfDayUTC(date = new Date()) {
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0)
+  );
+}
+
+export function endOfDayUTC(date = new Date()) {
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      23,
+      59,
+      59,
+      999
+    )
+  );
 }
 
 export function resolvePeriod(
@@ -30,38 +49,49 @@ export function resolvePeriod(
   to?: string | null
 ): { from: Date; to: Date; label: string } {
   const now = new Date();
-  const toDate = to ? endOfDay(new Date(to)) : endOfDay(now);
 
-  if (period === "custom" && from) {
+  if (period === "custom") {
+    if (from && to) {
+      return {
+        from: parseDateOnly(from, false),
+        to: parseDateOnly(to, true),
+        label: `${from} → ${to}`,
+      };
+    }
+    // Incomplete custom range: default to this month but keep an honest label.
     return {
-      from: startOfDay(new Date(from)),
-      to: toDate,
-      label: "Custom range",
+      from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)),
+      to: endOfDayUTC(now),
+      label: "Custom range (pick start & end dates)",
     };
   }
 
   if (period === "today") {
-    return { from: startOfDay(now), to: endOfDay(now), label: "Today" };
+    return {
+      from: startOfDayUTC(now),
+      to: endOfDayUTC(now),
+      label: "Today",
+    };
   }
 
   if (period === "week") {
-    const fromDate = startOfDay(now);
-    fromDate.setDate(fromDate.getDate() - 6);
-    return { from: fromDate, to: endOfDay(now), label: "Last 7 days" };
+    const fromDate = startOfDayUTC(now);
+    fromDate.setUTCDate(fromDate.getUTCDate() - 6);
+    return { from: fromDate, to: endOfDayUTC(now), label: "Last 7 days" };
   }
 
   if (period === "year") {
     return {
-      from: new Date(now.getFullYear(), 0, 1),
-      to: endOfDay(now),
+      from: new Date(Date.UTC(now.getUTCFullYear(), 0, 1)),
+      to: endOfDayUTC(now),
       label: "This year",
     };
   }
 
   // month (default)
   return {
-    from: new Date(now.getFullYear(), now.getMonth(), 1),
-    to: endOfDay(now),
+    from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)),
+    to: endOfDayUTC(now),
     label: "This month",
   };
 }
@@ -106,7 +136,6 @@ export async function getAccountingSummary(from: Date, to: Date) {
     0
   );
 
-  // Daily cash-flow series
   const byDay: Record<string, { income: number; expenses: number; profit: number }> = {};
   for (const order of orders as Array<{ createdAt: Date; totalPrice: unknown }>) {
     const key = dayKey(new Date(order.createdAt));
@@ -127,7 +156,6 @@ export async function getAccountingSummary(from: Date, to: Date) {
       profit: values.income - values.expenses,
     }));
 
-  // Expense by category
   const byCategory: Record<string, number> = {};
   for (const expense of expenses as Array<{ category: string; amount: unknown }>) {
     byCategory[expense.category] =
@@ -137,7 +165,6 @@ export async function getAccountingSummary(from: Date, to: Date) {
     .map(([category, amount]) => ({ category, amount }))
     .sort((a, b) => b.amount - a.amount);
 
-  // Income by payment method
   const byPayment: Record<string, number> = {};
   for (const order of orders as Array<{ paymentMethod: string; totalPrice: unknown }>) {
     const method = String(order.paymentMethod || "unknown").split("|")[0];
@@ -176,7 +203,6 @@ export async function getAccountingSummary(from: Date, to: Date) {
         createdAt: o.createdAt,
         shippingName: o.shippingName,
       })),
-    /** Full period orders for PDF/Excel reports (not capped). */
     reportOrders: (orders as Array<{
       id: string;
       totalPrice: unknown;
