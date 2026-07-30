@@ -35,10 +35,22 @@ export type HeroBannerRow = {
   productDiscountedPrice: unknown;
 };
 
+async function ensureHeroSliderSchema() {
+  const sql = [
+    `ALTER TABLE "HeroSlider" ALTER COLUMN "productId" DROP NOT NULL`,
+    `ALTER TABLE "HeroSlider" ADD COLUMN IF NOT EXISTS "headline" TEXT`,
+    `ALTER TABLE "HeroSlider" ADD COLUMN IF NOT EXISTS "description" TEXT`,
+    `ALTER TABLE "HeroSlider" ADD COLUMN IF NOT EXISTS "ctaLabel" TEXT DEFAULT 'Shop Now'`,
+    `ALTER TABLE "HeroSlider" ADD COLUMN IF NOT EXISTS "sortOrder" INTEGER NOT NULL DEFAULT 0`,
+  ];
+
+  for (const statement of sql) {
+    await prismaClientInstance.$executeRawUnsafe(statement).catch(() => undefined);
+  }
+}
+
 export async function listHeroSlidersAdmin() {
-  await prismaClientInstance.$executeRawUnsafe(
-    `ALTER TABLE "HeroSlider" ALTER COLUMN "productId" DROP NOT NULL`
-  ).catch(() => undefined);
+  await ensureHeroSliderSchema();
 
   return prismaClientInstance.$queryRaw<HeroSliderRow[]>`
     SELECT
@@ -78,9 +90,7 @@ export async function createHeroSlider(data: {
   ctaLabel: string;
   sortOrder: number;
 }) {
-  await prismaClientInstance.$executeRawUnsafe(
-    `ALTER TABLE "HeroSlider" ALTER COLUMN "productId" DROP NOT NULL`
-  ).catch(() => undefined);
+  await ensureHeroSliderSchema();
 
   const rows = await prismaClientInstance.$queryRaw<
     {

@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { getDealProducts } from "@/get-api-data/product";
+import {
+  getFeaturedProducts,
+  getNewArrivalsProduct,
+} from "@/get-api-data/product";
 import { getCategories } from "@/get-api-data/category";
 import { getSiteSettings } from "@/get-api-data/site-settings";
 import { getHeroSliders } from "@/get-api-data/hero";
@@ -10,6 +13,58 @@ import {
   DEFAULT_HERO_SUBTITLE,
   DEFAULT_HERO_TITLE,
 } from "@/lib/site-settings-db";
+
+function ProductCard({ item }: { item: any }) {
+  const image =
+    item.productVariants?.find((v: { isDefault?: boolean; image?: string | null }) => v.isDefault)
+      ?.image ||
+    item.productVariants?.[0]?.image ||
+    item.images?.[0] ||
+    "/images/products/product-placeholder.svg";
+  const currentPrice = Number(item.discountedPrice ?? item.price ?? 0);
+  const oldPrice = Number(item.price ?? 0);
+
+  return (
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <Link href={`/products/${item.slug}`} className="block bg-slate-100 p-6 text-center">
+        <img
+          src={image}
+          alt={item.title}
+          className="mx-auto h-36 w-full max-w-[180px] object-contain"
+        />
+      </Link>
+      <div className="p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          Live catalog
+        </p>
+        <Link
+          href={`/products/${item.slug}`}
+          className="mt-1 block text-sm font-bold text-slate-900 hover:text-[#1c2ea3]"
+        >
+          {item.title}
+        </Link>
+        <div className="mt-3 flex items-end justify-between gap-3">
+          <div>
+            <p className="text-base font-black text-[#ff7a1a]">
+              {currentPrice.toLocaleString("en-RW")} RWF
+            </p>
+            {item.discountedPrice ? (
+              <p className="text-xs text-slate-400 line-through">
+                {oldPrice.toLocaleString("en-RW")} RWF
+              </p>
+            ) : null}
+          </div>
+          <Link
+            href={`/products/${item.slug}`}
+            className="rounded-lg bg-[#1c2ea3] px-3 py-2 text-xs font-bold text-white hover:bg-[#16257e]"
+          >
+            View
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
 
 function splitHeroTitle(title: string) {
   const words = title.trim().split(/\s+/).filter(Boolean);
@@ -23,24 +78,32 @@ function splitHeroTitle(title: string) {
 }
 
 const Home = async () => {
-  const [siteSettings, products, categories, productCount, customerCount, reviewStats, heroSliders] =
-    await Promise.all([
-      getSiteSettings(),
-      getDealProducts(),
-      getCategories(),
-      prisma.product.count().catch(() => 0),
-      prisma.user.count({ where: { role: "USER" } }).catch(() => 0),
-      prisma.review
-        .aggregate({
-          where: { isApproved: true },
-          _count: { ratings: true },
-          _avg: { ratings: true },
-        })
-        .catch(() => ({ _count: { ratings: 0 }, _avg: { ratings: null } })),
-      getHeroSliders().catch(() => []),
-    ]);
+  const [
+    siteSettings,
+    featuredProducts,
+    newArrivalProducts,
+    categories,
+    productCount,
+    customerCount,
+    reviewStats,
+    heroSliders,
+  ] = await Promise.all([
+    getSiteSettings(),
+    getFeaturedProducts(),
+    getNewArrivalsProduct(),
+    getCategories(),
+    prisma.product.count().catch(() => 0),
+    prisma.user.count({ where: { role: "USER" } }).catch(() => 0),
+    prisma.review
+      .aggregate({
+        where: { isApproved: true },
+        _count: { ratings: true },
+        _avg: { ratings: true },
+      })
+      .catch(() => ({ _count: { ratings: 0 }, _avg: { ratings: null } })),
+    getHeroSliders().catch(() => []),
+  ]);
 
-  const featuredProducts = products.slice(0, 6);
   const categoryList = categories.slice(0, 6);
 
   const heroTitle = siteSettings?.heroTitle?.trim() || DEFAULT_HERO_TITLE;
@@ -135,45 +198,39 @@ const Home = async () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {featuredProducts.map((item) => {
-            const image =
-              item.productVariants?.find((v: { isDefault?: boolean; image?: string | null }) => v.isDefault)
-                ?.image ||
-              item.productVariants?.[0]?.image ||
-              "/images/products/product-placeholder.svg";
-            const currentPrice = Number(item.discountedPrice ?? item.price ?? 0);
-            const oldPrice = Number(item.price ?? 0);
-            return (
-              <article
-                key={item.id}
-                className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <Link href={`/products/${item.slug}`} className="block bg-slate-100 p-6 text-center">
-                  <img src={image} alt={item.title} className="mx-auto h-36 w-full max-w-[180px] object-contain" />
-                </Link>
-                <div className="p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Live catalog</p>
-                  <Link href={`/products/${item.slug}`} className="mt-1 block text-sm font-bold text-slate-900 hover:text-[#1c2ea3]">
-                    {item.title}
-                  </Link>
-                  <div className="mt-3 flex items-end justify-between gap-3">
-                    <div>
-                      <p className="text-base font-black text-[#ff7a1a]">{currentPrice.toLocaleString("en-RW")} RWF</p>
-                      {item.discountedPrice ? (
-                        <p className="text-xs text-slate-400 line-through">{oldPrice.toLocaleString("en-RW")} RWF</p>
-                      ) : null}
-                    </div>
-                    <Link href={`/products/${item.slug}`} className="rounded-lg bg-[#1c2ea3] px-3 py-2 text-xs font-bold text-white hover:bg-[#16257e]">
-                      View
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+        {featuredProducts.length > 0 ? (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {featuredProducts.map((item) => (
+              <ProductCard key={item.id} item={item} />
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center text-sm text-slate-500">
+            No products yet. Add products in Admin → Products.
+          </p>
+        )}
       </section>
+
+      {newArrivalProducts.length > 0 ? (
+        <section className="mx-auto mt-14 w-full max-w-7xl px-4 sm:px-8 xl:px-0" id="new-arrivals">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <h2 className="text-2xl font-black text-slate-900 md:text-3xl">
+              New <span className="text-[#ff7a1a]">Arrivals</span>
+            </h2>
+            <Link
+              href="/shop-without-sidebar"
+              className="text-sm font-bold text-[#1c2ea3] hover:underline"
+            >
+              See all products
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {newArrivalProducts.map((item) => (
+              <ProductCard key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="mx-auto mt-14 w-full max-w-7xl px-4 sm:px-8 xl:px-0" id="categories">
         <div className="mb-6 flex items-center justify-between gap-4">

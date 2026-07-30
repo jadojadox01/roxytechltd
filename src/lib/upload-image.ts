@@ -1,6 +1,8 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { Readable } from "stream";
 import cloudinary, { configureCloudinary, isCloudinaryReady } from "@/lib/cloudinary";
+import { getMissingCloudinaryVars } from "@/lib/cloudinary-env";
 
 export async function saveLocalImage(
   file: File,
@@ -24,6 +26,30 @@ export function isCloudinaryConfigured() {
   return isCloudinaryReady();
 }
 
+function uploadBufferToCloudinary(buffer: Buffer, folder: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: `roxytech/${folder}`,
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        if (!result?.secure_url) {
+          reject(new Error("Cloudinary upload did not return a URL"));
+          return;
+        }
+        resolve(result.secure_url);
+      }
+    );
+
+    Readable.from(buffer).pipe(stream);
+  });
+}
+
 export async function uploadImageFile(
   file: File,
   folder: string,
@@ -33,26 +59,29 @@ export async function uploadImageFile(
     throw new Error("Image file is empty");
   }
 
+  const isProd = Boolean(process.env["VERCEL"]) || process.env["NODE_ENV"] === "production";
+  const buffer = Buffer.from(await file.arrayBuffer());
+
   if (isCloudinaryReady() && configureCloudinary()) {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const mime = file.type || "image/jpeg";
-    const dataUri = `data:${mime};base64,${buffer.toString("base64")}`;
-
-    const uploaded = await cloudinary.uploader.upload(dataUri, {
-      folder: `roxytech/${folder}`,
-      resource_type: "image",
-    });
-
-    if (!uploaded.secure_url) {
-      throw new Error("Cloudinary upload did not return a URL");
+    try {
+      return await uploadBufferToCloudinary(buffer, folder);
+    } catch (err) {
+      console.error("[uploadImageFile] Cloudinary failed:", err);
+      if (isProd) {
+        throw new Error(
+          err instanceof Error
+            ? `Image upload failed: ${err.message}`
+            : "Cloudinary upload failed"
+        );
+      }
+      // Local/dev fallback so admin can keep working offline
     }
-
-    return uploaded.secure_url;
-  }
-
-  if (process.env["VERCEL"] || process.env["NODE_ENV"] === "production") {
+  } else if (isProd) {
+    const missing = getMissingCloudinaryVars();
     throw new Error(
-      "Cloudinary is not available on the server. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in Vercel, then redeploy."
+      missing.length
+        ? `Cloudinary is not configured (missing ${missing.join(", ")}). Add them in Vercel → Settings → Environment Variables, then redeploy.`
+        : "Cloudinary is not available on the server."
     );
   }
 

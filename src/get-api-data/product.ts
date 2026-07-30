@@ -7,24 +7,35 @@ import { slugify } from "@/lib/slugify";
 const mapProductsWithReviews = (products: any[]) =>
   products.map((product: any) => {
     const { _count, ...item } = product;
-    const variantImages = Array.isArray(item.images) && item.images.length > 0
-      ? item.images
-      : ["/images/products/product-placeholder.png"];
-    const derivedVariants = Array.isArray(item.productVariants) && item.productVariants.length > 0
-      ? item.productVariants
-      : variantImages.map((image: string, index: number) => ({
-          image,
-          color: null,
-          size: null,
-          isDefault: index === 0,
-        }));
+    const variantImages =
+      Array.isArray(item.images) && item.images.length > 0
+        ? item.images
+        : ["/images/products/product-placeholder.svg"];
+    const derivedVariants =
+      Array.isArray(item.productVariants) && item.productVariants.length > 0
+        ? item.productVariants
+        : variantImages.map((image: string, index: number) => ({
+            image,
+            color: null,
+            size: null,
+            isDefault: index === 0,
+          }));
+
+    const toNum = (value: unknown) => {
+      if (value == null) return null;
+      if (typeof value === "object" && value !== null && "toNumber" in value) {
+        return (value as { toNumber: () => number }).toNumber();
+      }
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    };
 
     return {
       ...item,
       productVariants: derivedVariants,
-      reviews: _count.reviews,
-      price: item.price.toNumber(),
-      discountedPrice: item?.discountedPrice ? item.discountedPrice.toNumber() : null,
+      reviews: _count?.reviews ?? 0,
+      price: toNum(item.price) ?? 0,
+      discountedPrice: toNum(item.discountedPrice),
     };
   });
 
@@ -44,53 +55,117 @@ export const getProductsIdAndTitle = unstable_cache(
 
 export const getNewArrivalsProduct = unstable_cache(
   async () => {
-    const selectFields = {
-      id: true,
-      title: true,
-      shortDescription: true,
-      price: true,
-      discountedPrice: true,
-      slug: true,
-      quantity: true,
-      updatedAt: true,
-      productVariants: {
-        select: {
-          image: true,
-          color: true,
-          size: true,
-          isDefault: true,
+    try {
+      const selectFields = {
+        id: true,
+        title: true,
+        shortDescription: true,
+        price: true,
+        discountedPrice: true,
+        slug: true,
+        quantity: true,
+        updatedAt: true,
+        images: true,
+        productVariants: {
+          select: {
+            image: true,
+            color: true,
+            size: true,
+            isDefault: true,
+          },
         },
-      },
-      _count: {
-        select: {
-          reviews: {
-            where: {
-              isApproved: true,
+        _count: {
+          select: {
+            reviews: {
+              where: {
+                isApproved: true,
+              },
             },
           },
         },
-      },
-    } as const;
+      } as const;
 
-    let products = await prisma.product.findMany({
-      where: { isNewArrival: true },
-      orderBy: { updatedAt: "desc" },
-      select: selectFields,
-      take: 8,
-    });
-
-    if (products.length === 0) {
-      products = await prisma.product.findMany({
+      // Show flagged arrivals even if stock is 0 so admin toggles are visible.
+      const products = await prisma.product.findMany({
+        where: { isNewArrival: true },
         orderBy: { updatedAt: "desc" },
         select: selectFields,
         take: 8,
       });
-    }
 
-    return mapProductsWithReviews(products as any[]);
+      return mapProductsWithReviews(products as any[]);
+    } catch (error) {
+      console.error("[getNewArrivalsProduct]", error);
+      return [];
+    }
   },
   ["products-new-arrivals"],
-  { tags: ["products"] }
+  { tags: ["products", "products-new-arrivals"] }
+);
+
+/** Featured catalog strip for homepage (not limited to discounted deals). */
+export const getFeaturedProducts = unstable_cache(
+  async () => {
+    try {
+      const selectFields = {
+        id: true,
+        title: true,
+        shortDescription: true,
+        price: true,
+        discountedPrice: true,
+        slug: true,
+        quantity: true,
+        updatedAt: true,
+        images: true,
+        productVariants: {
+          select: {
+            image: true,
+            color: true,
+            size: true,
+            isDefault: true,
+          },
+        },
+        _count: {
+          select: {
+            reviews: { where: { isApproved: true } },
+          },
+        },
+      } as const;
+
+      // Prefer discounted items, then fill with latest products.
+      const deals = await prisma.product.findMany({
+        where: {
+          discountedPrice: { not: null },
+        },
+        select: selectFields,
+        orderBy: { updatedAt: "desc" },
+        take: 6,
+      });
+
+      if (deals.length >= 3) {
+        return mapProductsWithReviews(deals as any[]);
+      }
+
+      const latest = await prisma.product.findMany({
+        select: selectFields,
+        orderBy: { updatedAt: "desc" },
+        take: 6,
+      });
+
+      const merged = [...deals];
+      for (const item of latest) {
+        if (!merged.some((p) => p.id === item.id)) merged.push(item);
+        if (merged.length >= 6) break;
+      }
+
+      return mapProductsWithReviews(merged as any[]);
+    } catch (error) {
+      console.error("[getFeaturedProducts]", error);
+      return [];
+    }
+  },
+  ["featured-products"],
+  { tags: ["products", "featured-products"] }
 );
 
 export const getBestSellingProducts = unstable_cache(

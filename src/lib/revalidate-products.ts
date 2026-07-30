@@ -6,6 +6,9 @@ export function revalidateProductCaches() {
   revalidateTag("categories", "max");
   revalidateTag("deal-products", "max");
   revalidateTag("related-products", "max");
+  revalidateTag("products-new-arrivals", "max");
+  revalidateTag("featured-products", "max");
+  revalidateTag("best-selling-products", "max");
 
   revalidatePath("/", "layout");
   revalidatePath("/shop-with-sidebar");

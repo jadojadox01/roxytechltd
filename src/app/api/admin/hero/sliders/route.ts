@@ -108,20 +108,28 @@ export async function POST(req: Request) {
       sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
     });
 
-    revalidateTag("heroSliders", "max");
-    revalidateTag("heroBanners", "max");
+    try {
+      revalidateTag("heroSliders", "max");
+      revalidateTag("heroBanners", "max");
+    } catch (revalidateError) {
+      console.error("Hero slide revalidate error:", revalidateError);
+    }
 
-    await logActivity({
-      userId: session!.user.id,
-      userName: session!.user.name || session!.user.email,
-      userRole: session!.user.role,
-      action: "HERO_SLIDE_CREATED",
-      module: "SETTINGS",
-      entityId: String(slider.id),
-      entityName: slider.sliderName,
-      description: `Created hero slide "${slider.sliderName}"`,
-      ...getRequestMeta(req),
-    });
+    try {
+      await logActivity({
+        userId: session!.user.id,
+        userName: session!.user.name || session!.user.email,
+        userRole: session!.user.role,
+        action: "HERO_SLIDE_CREATED",
+        module: "SETTINGS",
+        entityId: String(slider.id),
+        entityName: slider.sliderName,
+        description: `Created hero slide "${slider.sliderName}"`,
+        ...getRequestMeta(req),
+      });
+    } catch (logError) {
+      console.error("Hero slide activity log error:", logError);
+    }
 
     return NextResponse.json(
       {
@@ -135,12 +143,10 @@ export async function POST(req: Request) {
     );
   } catch (err) {
     console.error("POST hero slider error:", err);
-    return NextResponse.json(
-      {
-        success: false,
-        message: err instanceof Error ? err.message : "Failed to create slide",
-      },
-      { status: 500 }
-    );
+    const message =
+      err instanceof Error && err.message
+        ? err.message
+        : "Failed to create slide";
+    return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }
