@@ -29,8 +29,8 @@ export default async function StoreKeeperProductsPage() {
     >
       <div className="mb-4 flex justify-end">
         <Link
-          href="/admin/products/new"
-          className="rounded-lg bg-[#02AAA4] px-4 py-2 text-sm font-medium text-white hover:bg-[#028f86]"
+          href="/storekeeper/products/new"
+          className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
         >
           + Add Product
         </Link>

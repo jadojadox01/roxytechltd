@@ -5,7 +5,6 @@ import { Toaster } from "react-hot-toast";
 import Providers from "./Providers";
 import NextTopLoader from "nextjs-toploader";
 import MainHeader from "@/components/Header/MainHeader";
-import PromoTicker from "@/components/Header/PromoTicker";
 import { getHeaderSettings } from "@/get-api-data/header-setting";
 import { getSiteSettings } from "@/get-api-data/site-settings";
 import { getCategories } from "@/get-api-data/category";
@@ -41,7 +40,6 @@ export default async function SiteLayout({
             showSpinner={false}
             shadow="none"
           />
-          <PromoTicker />
           <MainHeader
             headerData={headerSettingData}
             siteName={siteName}

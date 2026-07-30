@@ -23,7 +23,7 @@ export async function GET() {
         inventory: true,
         stockMovements: {
           orderBy: { createdAt: "desc" },
-          take: 3,
+          take: 12,
           include: {
             performedBy: { select: { name: true, email: true } },
             supplier: { select: { name: true } },

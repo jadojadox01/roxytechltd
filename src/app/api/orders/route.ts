@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prismaClientInstance } from "@/lib/prismaDB";
 import { notifyOrderPlaced } from "@/lib/order-emails";
+import { markCouponUsed, validateAndComputeCoupon } from "@/lib/coupon";
 
 type CheckoutItem = {
   id: string;
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { customer, items, paymentMethod } = body || {};
+    const { customer, items, paymentMethod, couponCode } = body || {};
 
     if (
       !customer?.name ||
@@ -115,6 +116,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const { coupon, error: couponError } = await validateAndComputeCoupon(
+      couponCode,
+      computedTotal
+    );
+    if (couponError) {
+      return NextResponse.json({ success: false, message: couponError }, { status: 400 });
+    }
+
+    const discountAmount = coupon?.discountAmount || 0;
+    const finalTotal = Math.max(0, computedTotal - discountAmount);
+    const paymentLabel = coupon
+      ? `${paymentMethod || "cod"}|coupon:${coupon.code}|discount:${discountAmount}`
+      : paymentMethod || "cod";
+
     const order = await prismaClientInstance.order.create({
       data: {
         userId: session.user.id,
@@ -122,8 +137,8 @@ export async function POST(request: NextRequest) {
         shippingEmail: String(customer.email).trim().toLowerCase(),
         shippingPhone: String(customer.phone).trim(),
         shippingAddress: String(customer.address).trim(),
-        totalPrice: computedTotal,
-        paymentMethod: paymentMethod || "cod",
+        totalPrice: finalTotal,
+        paymentMethod: paymentLabel,
         status: "PENDING",
         items: {
           create: orderItems,
@@ -131,6 +146,12 @@ export async function POST(request: NextRequest) {
       },
       include: { items: true },
     });
+
+    if (coupon?.code) {
+      await markCouponUsed(coupon.code).catch((err) =>
+        console.error("[coupon] mark used failed", err)
+      );
+    }
 
     void notifyOrderPlaced({
       id: order.id,
@@ -149,7 +170,7 @@ export async function POST(request: NextRequest) {
       })),
     }).catch((err) => console.error("[order-email] place failed", err));
 
-    return NextResponse.json({ success: true, order });
+    return NextResponse.json({ success: true, order, discountAmount });
   } catch (error: unknown) {
     console.error("Order creation failed", error);
     const message = error instanceof Error ? error.message : "Unable to create order";

@@ -86,20 +86,14 @@ const MobileMenu = ({ isOpen, onClose, menuData, headerLogo, siteName, categorie
           <div className="flex items-center justify-between p-4 border-b border-gray-3">
             <div>
               <Link className="block shrink-0" href="/">
-                {headerLogo ? (
-                  <Image
-                    src={headerLogo}
-                    alt={siteName || "Logo"}
-                    width={70}
-                    height={40}
-                    priority
-                    className="h-9 w-auto object-contain"
-                  />
-                ) : (
-                  <span className="text-lg font-bold text-slate-900">
-                    {siteName || "Store"}
-                  </span>
-                )}
+                <Image
+                  src={headerLogo || "/images/logo/logo.svg"}
+                  alt={siteName || "Logo"}
+                  width={170}
+                  height={76}
+                  priority
+                  className="h-14 w-auto object-contain"
+                />
               </Link>
             </div>
             <button

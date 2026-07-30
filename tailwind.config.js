@@ -10,7 +10,9 @@ const config = {
   darkMode: "class",
   theme: {
     fontFamily: {
-      body: ["DM Sans", "sans-serif"],
+      body: ["Inter", "sans-serif"],
+      heading: ["Poppins", "Inter", "sans-serif"],
+      sans: ["Inter", "sans-serif"],
     },
     container: {
       center: true,

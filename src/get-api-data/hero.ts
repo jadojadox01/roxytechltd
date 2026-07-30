@@ -45,12 +45,13 @@ export const getHeroSliders = unstable_cache(
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
       product: {
-        title: item.productTitle,
-        slug: item.productSlug,
+        title: item.productTitle || item.sliderName,
+        slug: item.productSlug || "",
         shortDescription: item.productShortDescription,
         price: 0,
         discountedPrice: null,
       },
+      productSlug: item.productSlug,
     }));
   },
   ["heroSliders"],

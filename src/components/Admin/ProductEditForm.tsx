@@ -25,9 +25,14 @@ type ProductEditFormProps = {
     images?: string[] | null;
   };
   categories: CategoryOption[];
+  returnPath?: string;
 };
 
-export default function ProductEditForm({ product, categories }: ProductEditFormProps) {
+export default function ProductEditForm({
+  product,
+  categories,
+  returnPath = "/admin/products",
+}: ProductEditFormProps) {
   const [title, setTitle] = useState(product.title || "");
   const [slug, setSlug] = useState(product.slug || "");
   const [shortDescription, setShortDescription] = useState(product.shortDescription || "");
@@ -110,7 +115,7 @@ export default function ProductEditForm({ product, categories }: ProductEditForm
       }
 
       toast.success("Product updated successfully");
-      router.push("/admin/products");
+      router.push(returnPath);
       router.refresh();
     } catch (err: any) {
       toast.error(err.message || "Failed to update product");
@@ -268,7 +273,7 @@ export default function ProductEditForm({ product, categories }: ProductEditForm
         </button>
         <button
           type="button"
-          onClick={() => router.push("/admin/products")}
+          onClick={() => router.push(returnPath)}
           className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
         >
           Cancel

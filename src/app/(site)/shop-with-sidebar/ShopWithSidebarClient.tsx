@@ -39,6 +39,7 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
   const pathname = usePathname();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(null);
+  const [inStockOnly, setInStockOnly] = useState(false);
   const [sortBy, setSortBy] = useState<string>("latest");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -63,6 +64,10 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
       }
     }
 
+    if (inStockOnly) {
+      result = result.filter((p) => (p.quantity || 0) > 0);
+    }
+
     // Sort
     switch (sortBy) {
       case "price-asc":
@@ -82,7 +87,7 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
     }
 
     return result;
-  }, [products, selectedCategory, selectedPriceRange, sortBy, categories]);
+  }, [products, selectedCategory, selectedPriceRange, sortBy, inStockOnly]);
 
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
   const paginatedProducts = filteredProducts.slice(
@@ -93,11 +98,12 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
   const handleClearFilters = () => {
     setSelectedCategory(null);
     setSelectedPriceRange(null);
+    setInStockOnly(false);
     setSortBy("latest");
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = selectedCategory || selectedPriceRange;
+  const hasActiveFilters = selectedCategory || selectedPriceRange || inStockOnly;
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -114,7 +120,7 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
     <div className="flex flex-col gap-6 lg:flex-row">
       {/* Mobile sidebar toggle */}
       <button
-        className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm lg:hidden"
+        className="flex items-center gap-2 rounded-lg border border-[#ffcfad] bg-white px-4 py-2.5 text-sm font-semibold text-[#1c2ea3] shadow-sm lg:hidden"
         onClick={() => setSidebarOpen(!sidebarOpen)}
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -127,7 +133,7 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
       <aside
         className={`w-full shrink-0 lg:w-72 ${sidebarOpen ? "block" : "hidden"} lg:block`}
       >
-        <div className="sticky top-24 space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="sticky top-24 space-y-6 rounded-2xl border border-[#e8ecff] bg-white p-5 shadow-sm">
           {/* Categories */}
           <div>
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-900">
@@ -139,7 +145,7 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
                   onClick={() => { setSelectedCategory(null); setCurrentPage(1); }}
                   className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                     !selectedCategory
-                      ? "bg-[#02AAA4]/10 font-medium text-[#02AAA4]"
+                      ? "bg-[#fff2e8] font-semibold text-[#ff7a1a]"
                       : "text-slate-600 hover:bg-slate-100"
                   }`}
                 >
@@ -152,7 +158,7 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
                     onClick={() => { setSelectedCategory(cat.slug); setCurrentPage(1); }}
                     className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                       selectedCategory === cat.slug
-                        ? "bg-[#02AAA4]/10 font-medium text-[#02AAA4]"
+                        ? "bg-[#fff2e8] font-semibold text-[#ff7a1a]"
                         : "text-slate-600 hover:bg-slate-100"
                     }`}
                   >
@@ -164,6 +170,28 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
                 </li>
               ))}
             </ul>
+          </div>
+
+          <div className="border-t border-slate-100" />
+
+          {/* Availability */}
+          <div>
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-900">
+              Availability
+            </h3>
+            <button
+              onClick={() => {
+                setInStockOnly(!inStockOnly);
+                setCurrentPage(1);
+              }}
+              className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                inStockOnly
+                  ? "bg-[#eef2ff] font-semibold text-[#1c2ea3]"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              In stock only
+            </button>
           </div>
 
           <div className="border-t border-slate-100" />
@@ -180,7 +208,7 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
                     onClick={() => { setSelectedPriceRange(range.label); setCurrentPage(1); }}
                     className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                       selectedPriceRange === range.label
-                        ? "bg-[#02AAA4]/10 font-medium text-[#02AAA4]"
+                        ? "bg-[#eef2ff] font-semibold text-[#1c2ea3]"
                         : "text-slate-600 hover:bg-slate-100"
                     }`}
                   >
@@ -209,7 +237,7 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
       {/* Main Content */}
       <div className="flex-1">
         {/* Sort & Info Bar */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e8ecff] bg-white px-4 py-3 shadow-sm">
           <p className="text-sm text-slate-600">
             Showing{" "}
             <span className="font-semibold text-slate-900">{paginatedProducts.length}</span> of{" "}
@@ -224,7 +252,7 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
               id="sort"
               value={sortBy}
               onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 outline-none focus:border-[#02AAA4] focus:ring-1 focus:ring-[#02AAA4]"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 outline-none focus:border-[#1c2ea3] focus:ring-1 focus:ring-[#1c2ea3]"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -239,7 +267,7 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
         {paginatedProducts.length > 0 ? (
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {paginatedProducts.map((product: any) => (
-              <div key={product.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div key={product.id} className="rounded-2xl border border-[#e8ecff] bg-white p-4 shadow-sm">
                 <ProductItem item={product as any} />
               </div>
             ))}
@@ -258,7 +286,7 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
             {hasActiveFilters && (
               <button
                 onClick={handleClearFilters}
-                className="rounded-lg bg-[#02AAA4] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#028f86]"
+                className="rounded-lg bg-[#ff7a1a] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#e7680d]"
               >
                 Clear all filters
               </button>
@@ -284,7 +312,7 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
                 onClick={() => setCurrentPage(page)}
                 className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
                   currentPage === page
-                    ? "bg-[#02AAA4] text-white"
+                    ? "bg-[#1c2ea3] text-white"
                     : "border border-slate-200 text-slate-600 hover:bg-slate-100"
                 }`}
               >

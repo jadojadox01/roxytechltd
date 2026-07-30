@@ -144,6 +144,12 @@ export default function AdminOrdersClient() {
           />
         </div>
         <div className="flex gap-2">
+          <a
+            href="/api/reports/export?type=orders"
+            className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Export CSV
+          </a>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}

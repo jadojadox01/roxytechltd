@@ -219,14 +219,50 @@ export default function StoreKeeperOrdersClient() {
                     </div>
                   </div>
                   <div>
-                    <h4 className="text-xs font-semibold uppercase text-slate-500 mb-2">Items</h4>
+                    <h4 className="mb-2 text-xs font-semibold uppercase text-slate-500">Items</h4>
                     {order.items.map((item) => (
-                      <div key={item.id} className="flex justify-between py-2 text-sm border-b last:border-0">
-                        <span>{item.productTitle} × {item.quantity}</span>
+                      <div key={item.id} className="flex justify-between border-b py-2 text-sm last:border-0">
+                        <span>
+                          {item.productTitle} × {item.quantity}
+                        </span>
                         <span className="font-medium">{formatPrice(item.price)}</span>
                       </div>
                     ))}
                   </div>
+                  <a
+                    href={`/api/orders/${order.id}/packing-slip`}
+                    className="inline-flex rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+                  >
+                    Download packing slip (PDF)
+                  </a>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const note = window.prompt(
+                        "Describe the return / refund issue for admin review:"
+                      );
+                      if (!note?.trim()) return;
+                      const res = await fetch("/api/contact", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          name: "Store Keeper",
+                          email: "operations@roxin.local",
+                          subject: `Return / refund request — Order #${order.id.slice(0, 8)}`,
+                          message: `Order ID: ${order.id}\nCustomer: ${order.shippingName}\n\n${note.trim()}`,
+                        }),
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      if (res.ok || data.success) {
+                        toast.success("Return request sent to admin Messages");
+                      } else {
+                        toast.error(data.message || "Could not send return request");
+                      }
+                    }}
+                    className="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Flag return / refund
+                  </button>
                 </div>
               )}
             </div>

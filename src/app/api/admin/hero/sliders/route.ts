@@ -39,7 +39,9 @@ export async function GET() {
       sortOrder: row.sortOrder,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
-      product: { title: row.productTitle, slug: row.productSlug },
+      product: row.productTitle
+        ? { title: row.productTitle, slug: row.productSlug }
+        : null,
     }));
 
     return NextResponse.json({ success: true, sliders });
@@ -59,7 +61,8 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const sliderName = formData.get("sliderName")?.toString().trim() || "";
-    const productId = formData.get("productId")?.toString() || "";
+    const productIdRaw = formData.get("productId")?.toString().trim() || "";
+    const productId = productIdRaw || null;
     const discountRate = Number(formData.get("discountRate") ?? 0);
     const headline = formData.get("headline")?.toString().trim() || null;
     const description = formData.get("description")?.toString().trim() || null;
@@ -67,9 +70,9 @@ export async function POST(req: Request) {
     const sortOrder = Number(formData.get("sortOrder") ?? 0);
     const imageFile = formData.get("image");
 
-    if (!sliderName || !productId) {
+    if (!sliderName) {
       return NextResponse.json(
-        { success: false, message: "Eyebrow label and product are required" },
+        { success: false, message: "Slide label is required" },
         { status: 400 }
       );
     }
@@ -78,12 +81,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "Slide image is required" }, { status: 400 });
     }
 
-    const product = await prismaClientInstance.product.findUnique({
-      where: { id: productId },
-      select: { id: true, title: true, slug: true },
-    });
-    if (!product) {
-      return NextResponse.json({ success: false, message: "Selected product not found" }, { status: 400 });
+    let product: { id: string; title: string; slug: string } | null = null;
+    if (productId) {
+      product = await prismaClientInstance.product.findUnique({
+        where: { id: productId },
+        select: { id: true, title: true, slug: true },
+      });
+      if (!product) {
+        return NextResponse.json({ success: false, message: "Selected product not found" }, { status: 400 });
+      }
     }
 
     const sliderImage = await saveImage(imageFile, "slide");
@@ -122,7 +128,7 @@ export async function POST(req: Request) {
         success: true,
         slider: {
           ...slider,
-          product: { title: product.title, slug: product.slug },
+          product: product ? { title: product.title, slug: product.slug } : null,
         },
       },
       { status: 201 }

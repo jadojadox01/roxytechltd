@@ -54,8 +54,8 @@ export default function AdminSettingsClient() {
     instagramUrl: "",
     linkedinUrl: "",
     currency: "RWF",
-    momoPhone: "0783428632",
-    momoAccountName: "Grace NKURIKIYINKA",
+    momoPhone: "",
+    momoAccountName: "",
     momoEnabled: true,
     bankCardsEnabled: false,
     bankCardsMessage: "Coming soon",
@@ -474,7 +474,7 @@ export default function AdminSettingsClient() {
                   <input
                     value={form.momoPhone}
                     onChange={(e) => setForm({ ...form, momoPhone: e.target.value })}
-                    placeholder="0783428632"
+                    placeholder="e.g. 07XXXXXXXX"
                     className={inputClass}
                   />
                 </div>
@@ -483,7 +483,7 @@ export default function AdminSettingsClient() {
                   <input
                     value={form.momoAccountName}
                     onChange={(e) => setForm({ ...form, momoAccountName: e.target.value })}
-                    placeholder="Grace NKURIKIYINKA"
+                    placeholder="Account holder name"
                     className={inputClass}
                   />
                 </div>

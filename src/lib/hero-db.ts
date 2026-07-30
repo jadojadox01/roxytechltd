@@ -6,15 +6,15 @@ export type HeroSliderRow = {
   sliderImage: string;
   discountRate: number;
   slug: string;
-  productId: string;
+  productId: string | null;
   headline: string | null;
   description: string | null;
   ctaLabel: string | null;
   sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
-  productTitle: string;
-  productSlug: string;
+  productTitle: string | null;
+  productSlug: string | null;
   productShortDescription: string | null;
 };
 
@@ -36,6 +36,10 @@ export type HeroBannerRow = {
 };
 
 export async function listHeroSlidersAdmin() {
+  await prismaClientInstance.$executeRawUnsafe(
+    `ALTER TABLE "HeroSlider" ALTER COLUMN "productId" DROP NOT NULL`
+  ).catch(() => undefined);
+
   return prismaClientInstance.$queryRaw<HeroSliderRow[]>`
     SELECT
       hs.id,
@@ -54,7 +58,7 @@ export async function listHeroSlidersAdmin() {
       p.slug AS "productSlug",
       p."shortDescription" AS "productShortDescription"
     FROM "HeroSlider" hs
-    INNER JOIN "Product" p ON p.id = hs."productId"
+    LEFT JOIN "Product" p ON p.id = hs."productId"
     ORDER BY hs."sortOrder" ASC, hs."updatedAt" DESC
   `;
 }
@@ -68,12 +72,16 @@ export async function createHeroSlider(data: {
   sliderImage: string;
   discountRate: number;
   slug: string;
-  productId: string;
+  productId: string | null;
   headline: string | null;
   description: string | null;
   ctaLabel: string;
   sortOrder: number;
 }) {
+  await prismaClientInstance.$executeRawUnsafe(
+    `ALTER TABLE "HeroSlider" ALTER COLUMN "productId" DROP NOT NULL`
+  ).catch(() => undefined);
+
   const rows = await prismaClientInstance.$queryRaw<
     {
       id: number;
@@ -81,7 +89,7 @@ export async function createHeroSlider(data: {
       sliderImage: string;
       discountRate: number;
       slug: string;
-      productId: string;
+      productId: string | null;
       headline: string | null;
       description: string | null;
       ctaLabel: string | null;

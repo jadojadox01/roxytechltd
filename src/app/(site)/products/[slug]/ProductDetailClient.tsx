@@ -65,12 +65,26 @@ type ReviewData = {
   totalRating: number;
 };
 
+type RelatedProduct = {
+  id: string;
+  title: string;
+  slug: string;
+  price: number;
+  discountedPrice?: number | null;
+  productVariants?: Variant[];
+};
+
 type Props = {
   product: Product;
   reviewData: ReviewData;
+  relatedProducts?: RelatedProduct[];
 };
 
-export default function ProductDetailClient({ product, reviewData }: Props) {
+export default function ProductDetailClient({
+  product,
+  reviewData,
+  relatedProducts = [],
+}: Props) {
   const { addItem, buyNow } = useCart();
   const [selectedImage, setSelectedImage] = useState(
     (product.productVariants ?? []).find((v) => v.isDefault)?.image ||
@@ -545,6 +559,40 @@ export default function ProductDetailClient({ product, reviewData }: Props) {
             )}
           </div>
         </div>
+
+        {relatedProducts.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-slate-900">Related products</h2>
+            <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {relatedProducts.slice(0, 8).map((item) => {
+                const image =
+                  item.productVariants?.find((v) => v.isDefault)?.image ||
+                  item.productVariants?.[0]?.image ||
+                  "/images/products/product-placeholder.svg";
+                const price = item.discountedPrice ?? item.price;
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/products/${item.slug}`}
+                    className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#1c2ea3] hover:shadow-sm"
+                  >
+                    <img
+                      src={image}
+                      alt={item.title}
+                      className="mx-auto h-28 w-full object-contain"
+                    />
+                    <p className="mt-3 line-clamp-2 text-sm font-semibold text-slate-900">
+                      {item.title}
+                    </p>
+                    <p className="mt-1 text-sm font-bold text-[#ff7a1a]">
+                      {formatPrice(price)}
+                    </p>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

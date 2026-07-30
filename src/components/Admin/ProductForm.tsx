@@ -17,7 +17,13 @@ function toSlug(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-export default function ProductForm({ categories }: { categories: CategoryOption[] }) {
+export default function ProductForm({
+  categories,
+  returnPath = "/admin/products",
+}: {
+  categories: CategoryOption[];
+  returnPath?: string;
+}) {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
@@ -65,7 +71,7 @@ export default function ProductForm({ categories }: { categories: CategoryOption
         const payload = await res.json().catch(() => ({}));
         throw new Error(payload.error || "Failed to create product");
       }
-      router.push("/admin/products");
+      router.push(returnPath);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create product");

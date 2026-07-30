@@ -6,7 +6,7 @@ const Newsletter = () => {
   return (
     <section className="overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-8 xl:px-0">
-        <div className="relative z-1 overflow-hidden rounded-2xl">
+        <div className="relative z-1 overflow-hidden rounded-2xl bg-gradient-to-r from-[#ff7a1a] to-[#e8680d]">
           <Graphics />
 
           <div className="relative flex flex-col gap-8 px-6 py-12 sm:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-14 lg:py-14">

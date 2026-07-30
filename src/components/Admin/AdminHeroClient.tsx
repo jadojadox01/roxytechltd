@@ -66,20 +66,38 @@ export default function AdminHeroClient({ products }: { products: ProductOption[
   const [bannerSortOrder, setBannerSortOrder] = useState("0");
   const [bannerProductId, setBannerProductId] = useState("");
   const [bannerImage, setBannerImage] = useState<File | null>(null);
+  const [savingCopy, setSavingCopy] = useState(false);
+  const [heroCopy, setHeroCopy] = useState({
+    heroEyebrow: "New collection",
+    heroTitle: "Elevate Your Shopping Journey",
+    heroSubtitle:
+      "Premium stationery, school & office materials — everything you need, all in one shop. Fast delivery across Rwanda.",
+  });
 
   async function loadAll() {
     setLoading(true);
     try {
-      const [slidesRes, bannersRes] = await Promise.all([
+      const [slidesRes, bannersRes, settingsRes] = await Promise.all([
         fetch("/api/admin/hero/sliders", { cache: "no-store" }),
         fetch("/api/admin/hero/banners", { cache: "no-store" }),
+        fetch("/api/admin/site-settings", { cache: "no-store" }),
       ]);
       const slidesData = await readJsonResponse(slidesRes);
       const bannersData = await readJsonResponse(bannersRes);
+      const settingsData = await readJsonResponse(settingsRes);
       if (!slidesRes.ok) throw new Error(slidesData.message || "Failed to load slides");
       if (!bannersRes.ok) throw new Error(bannersData.message || "Failed to load banners");
       setSlides(slidesData.success ? slidesData.sliders : []);
       setBanners(bannersData.success ? bannersData.banners : []);
+      if (settingsRes.ok && settingsData.settings) {
+        setHeroCopy({
+          heroEyebrow: settingsData.settings.heroEyebrow || "New collection",
+          heroTitle: settingsData.settings.heroTitle || "Elevate Your Shopping Journey",
+          heroSubtitle:
+            settingsData.settings.heroSubtitle ||
+            "Premium stationery, school & office materials — everything you need, all in one shop. Fast delivery across Rwanda.",
+        });
+      }
     } catch (err) {
       setSlides([]);
       setBanners([]);
@@ -95,8 +113,8 @@ export default function AdminHeroClient({ products }: { products: ProductOption[
 
   async function handleCreateSlide(e: React.FormEvent) {
     e.preventDefault();
-    if (!sliderName.trim() || !slideProductId || !slideImage) {
-      toast.error("Eyebrow label, product, and image are required.");
+    if (!sliderName.trim() || !slideImage) {
+      toast.error("Slide label and image are required.");
       return;
     }
     setSaving(true);
@@ -108,7 +126,7 @@ export default function AdminHeroClient({ products }: { products: ProductOption[
       formData.append("ctaLabel", ctaLabel);
       formData.append("discountRate", discountRate);
       formData.append("sortOrder", sortOrder);
-      formData.append("productId", slideProductId);
+      if (slideProductId) formData.append("productId", slideProductId);
       formData.append("image", slideImage);
 
       const res = await fetch("/api/admin/hero/sliders", { method: "POST", body: formData });
@@ -129,6 +147,39 @@ export default function AdminHeroClient({ products }: { products: ProductOption[
       toast.error(err instanceof Error ? err.message : "Failed to create slide");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleSaveHeroCopy(e: React.FormEvent) {
+    e.preventDefault();
+    if (!heroCopy.heroTitle.trim() || !heroCopy.heroSubtitle.trim()) {
+      toast.error("Hero title and subtitle are required.");
+      return;
+    }
+    setSavingCopy(true);
+    try {
+      const currentRes = await fetch("/api/admin/site-settings", { cache: "no-store" });
+      const currentData = await readJsonResponse(currentRes);
+      if (!currentRes.ok || !currentData.settings) {
+        throw new Error(currentData.message || "Failed to load settings");
+      }
+      const res = await fetch("/api/admin/site-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...currentData.settings,
+          heroEyebrow: heroCopy.heroEyebrow.trim(),
+          heroTitle: heroCopy.heroTitle.trim(),
+          heroSubtitle: heroCopy.heroSubtitle.trim(),
+        }),
+      });
+      const data = await readJsonResponse(res);
+      if (!res.ok || !data.success) throw new Error(data.message || "Failed to save hero text");
+      toast.success("Homepage hero text updated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save hero text");
+    } finally {
+      setSavingCopy(false);
     }
   }
 
@@ -187,12 +238,60 @@ export default function AdminHeroClient({ products }: { products: ProductOption[
 
   return (
     <div className="space-y-6">
+      <form
+        onSubmit={handleSaveHeroCopy}
+        className="space-y-4 rounded-2xl border border-[#d4ddff] bg-[#eef2ff]/60 p-5"
+      >
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">Homepage hero text</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Controls the left-side title and subtitle on the home page.
+          </p>
+        </div>
+        <div>
+          <label className={labelClass}>Eyebrow</label>
+          <input
+            value={heroCopy.heroEyebrow}
+            onChange={(e) => setHeroCopy({ ...heroCopy, heroEyebrow: e.target.value })}
+            className={inputClass}
+            placeholder="New collection"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Title *</label>
+          <input
+            value={heroCopy.heroTitle}
+            onChange={(e) => setHeroCopy({ ...heroCopy, heroTitle: e.target.value })}
+            className={inputClass}
+            placeholder="Elevate Your Shopping Journey"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Subtitle *</label>
+          <textarea
+            value={heroCopy.heroSubtitle}
+            onChange={(e) => setHeroCopy({ ...heroCopy, heroSubtitle: e.target.value })}
+            rows={3}
+            className={inputClass}
+            placeholder="Premium stationery, school & office materials..."
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={savingCopy}
+          className="rounded-xl bg-[#1c2ea3] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#16257e] disabled:opacity-60"
+        >
+          {savingCopy ? "Saving…" : "Save hero text"}
+        </button>
+      </form>
+
       <div className="rounded-xl border border-teal-100 bg-teal-50/50 p-4 text-sm text-slate-700">
         <p className="font-semibold text-slate-900">How the homepage hero works</p>
         <ul className="mt-2 list-inside list-disc space-y-1">
-          <li><strong>Slideshow slides</strong> — full-width moving images with headline, text overlay, discount badge, and button.</li>
-          <li><strong>Promo banners</strong> — also join the slideshow and appear as cards below the hero.</li>
-          <li>Lower <strong>sort order</strong> shows first. Add at least one slide for the hero to appear.</li>
+          <li><strong>Hero text</strong> — editable above (title + subtitle on the left).</li>
+          <li><strong>Slideshow slides</strong> — moving images on the right side of the hero.</li>
+          <li><strong>Promo banners</strong> — optional cards used elsewhere on marketing surfaces.</li>
+          <li>Lower <strong>sort order</strong> shows first. Add at least one slide for the right panel.</li>
         </ul>
       </div>
 
@@ -260,9 +359,9 @@ export default function AdminHeroClient({ products }: { products: ProductOption[
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className={labelClass}>Linked product *</label>
+                <label className={labelClass}>Linked product (optional)</label>
                 <select value={slideProductId} onChange={(e) => setSlideProductId(e.target.value)} className={inputClass}>
-                  <option value="">Select product</option>
+                  <option value="">No product link</option>
                   {products.map((p) => (
                     <option key={p.id} value={p.id}>{p.title}</option>
                   ))}

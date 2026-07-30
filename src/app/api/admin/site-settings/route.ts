@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
-
-import { prisma } from "@/lib/prismaDB";
 import { requireAdmin } from "@/lib/rbac";
+import {
+  getOrCreateSiteSettings,
+  updateSiteSettings,
+} from "@/lib/site-settings-db";
 
 export const runtime = "nodejs";
 
@@ -11,122 +13,64 @@ export async function GET() {
   if (error) return error;
 
   try {
-    let settings = await prisma.siteSetting.findFirst();
-
-    // Create default settings if none exist
-    if (!settings) {
-      settings = await prisma.siteSetting.create({
-        data: {
-          currency: "RWF",
-        },
-      });
-    }
-
-    return NextResponse.json({
-      success: true,
-      settings,
-    });
-  } catch (error: any) {
+    const settings = await getOrCreateSiteSettings();
+    return NextResponse.json({ success: true, settings });
+  } catch (error: unknown) {
     console.error("GET SITE SETTINGS ERROR:", error);
-
     return NextResponse.json(
       {
         success: false,
-        message: error?.message || "Failed to fetch site settings",
+        message: error instanceof Error ? error.message : "Failed to fetch site settings",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
 
-// ======================================================
-// UPDATE SITE SETTINGS (ADMIN ONLY)
-// ======================================================
 export async function PUT(request: NextRequest) {
   try {
     const { error: authError } = await requireAdmin();
     if (authError) return authError;
 
-    // Parse request body
     const body = await request.json();
-
-    const {
-      about,
-      mission,
-      vision,
-      contactPhone,
-      contactEmail,
-      contactAddress,
-      facebookUrl,
-      twitterUrl,
-      instagramUrl,
-      linkedinUrl,
-      currency,
-      momoPhone,
-      momoAccountName,
-      momoEnabled,
-      bankCardsEnabled,
-      bankCardsMessage,
-      codEnabled,
-    } = body;
-
-    // Find existing settings
-    let settings = await prisma.siteSetting.findFirst();
-
-    const data = {
-      about: about ?? null,
-      mission: mission ?? null,
-      vision: vision ?? null,
-      contactPhone: contactPhone ?? null,
-      contactEmail: contactEmail ?? null,
-      contactAddress: contactAddress ?? null,
-      facebookUrl: facebookUrl ?? null,
-      twitterUrl: twitterUrl ?? null,
-      instagramUrl: instagramUrl ?? null,
-      linkedinUrl: linkedinUrl ?? null,
-      currency: currency || "RWF",
-      momoPhone: momoPhone ?? null,
-      momoAccountName: momoAccountName ?? null,
-      momoEnabled: momoEnabled !== false,
-      bankCardsEnabled: bankCardsEnabled === true,
-      bankCardsMessage: bankCardsMessage ?? "Coming soon",
-      codEnabled: codEnabled !== false,
-    };
-
-    // Create or update
-    if (!settings) {
-      settings = await prisma.siteSetting.create({
-        data,
-      });
-    } else {
-      settings = await prisma.siteSetting.update({
-        where: {
-          id: settings.id,
-        },
-        data,
-      });
-    }
-
-    // Refresh cached pages/components
-    revalidateTag("site-settings", "max");
-
-    return NextResponse.json({
-      success: true,
-      settings,
+    const current = await getOrCreateSiteSettings();
+    const settings = await updateSiteSettings(current.id, {
+      about: body.about ?? null,
+      mission: body.mission ?? null,
+      vision: body.vision ?? null,
+      contactPhone: body.contactPhone ?? null,
+      contactEmail: body.contactEmail ?? null,
+      contactAddress: body.contactAddress ?? null,
+      facebookUrl: body.facebookUrl ?? null,
+      twitterUrl: body.twitterUrl ?? null,
+      instagramUrl: body.instagramUrl ?? null,
+      linkedinUrl: body.linkedinUrl ?? null,
+      currency: body.currency || "RWF",
+      momoPhone: body.momoPhone ? String(body.momoPhone).trim() || null : null,
+      momoAccountName: body.momoAccountName
+        ? String(body.momoAccountName).trim() || null
+        : null,
+      momoEnabled: body.momoEnabled !== false,
+      bankCardsEnabled: body.bankCardsEnabled === true,
+      bankCardsMessage: body.bankCardsMessage ?? "Coming soon",
+      codEnabled: body.codEnabled !== false,
+      heroEyebrow: body.heroEyebrow ?? null,
+      heroTitle: body.heroTitle ?? null,
+      heroSubtitle: body.heroSubtitle ?? null,
     });
-  } catch (error: any) {
-    console.error("UPDATE SITE SETTINGS ERROR:", error);
 
+    revalidateTag("site-settings", "max");
+    revalidateTag("heroSliders", "max");
+
+    return NextResponse.json({ success: true, settings });
+  } catch (error: unknown) {
+    console.error("UPDATE SITE SETTINGS ERROR:", error);
     return NextResponse.json(
       {
         success: false,
-        message: error?.message || "Failed to update site settings",
+        message: error instanceof Error ? error.message : "Failed to update site settings",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }

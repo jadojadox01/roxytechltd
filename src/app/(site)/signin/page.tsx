@@ -17,9 +17,9 @@ export default function SignInPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-[80vh] py-14">
+        <main className="min-h-[80vh] bg-slate-50 py-14">
           <div className="mx-auto max-w-md px-4 sm:px-6">
-            <h1 className="text-3xl font-semibold text-slate-900">Sign in to your account</h1>
+            <h1 className="text-3xl font-black text-slate-900">Sign in to your account</h1>
             <p className="mt-3 text-sm text-slate-600">Loading...</p>
           </div>
         </main>
@@ -80,17 +80,19 @@ function SignInForm() {
   };
 
   return (
-    <main className="min-h-[80vh] py-14">
+    <main className="min-h-[80vh] bg-slate-50 py-14">
       <div className="mx-auto max-w-md px-4 sm:px-6">
-        <h1 className="text-3xl font-semibold text-slate-900">Sign in to your account</h1>
-        <p className="mt-3 text-sm text-slate-600">Enter your credentials below.</p>
+        <div className="mb-6 rounded-3xl border border-[#e0e7ff] bg-gradient-to-r from-[#1a255f] to-[#24337f] p-6 text-white shadow-sm">
+          <h1 className="text-3xl font-black">Sign in to your account</h1>
+          <p className="mt-2 text-sm text-white/85">Enter your credentials below.</p>
+        </div>
         {idleLogout && (
           <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
             You were signed out after 2 minutes of inactivity.
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl border border-[#e8ecff] bg-white p-6 shadow-sm">
           <div>
             <label className="block text-sm font-medium text-slate-700">Email</label>
             <input
@@ -98,7 +100,7 @@ function SignInForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-slate-500 focus:outline-none"
+              className="mt-2 w-full rounded-lg border border-[#eadbcf] bg-[#fcf7f2] px-4 py-3 focus:border-[#ff7a1a] focus:outline-none"
             />
           </div>
 
@@ -112,7 +114,7 @@ function SignInForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-slate-500 focus:outline-none"
+              className="mt-2 w-full rounded-lg border border-[#eadbcf] bg-[#fcf7f2] px-4 py-3 focus:border-[#ff7a1a] focus:outline-none"
             />
           </div>
 
@@ -132,14 +134,14 @@ function SignInForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-[#02AAA4] px-4 py-3 text-white hover:bg-[#028f86] disabled:opacity-50"
+            className="w-full rounded-lg bg-[#ff7a1a] px-4 py-3 text-white transition hover:bg-[#e7680d] disabled:opacity-50"
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
         <div className="mt-6 text-center text-sm text-slate-600">
-          Don&apos;t have an account? <a href="/signup" className="text-slate-900 font-medium">Create one</a>
+          Don&apos;t have an account? <a href="/signup" className="font-semibold text-[#1c2ea3]">Create one</a>
         </div>
       </div>
     </main>

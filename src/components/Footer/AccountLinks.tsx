@@ -25,13 +25,13 @@ const accountLinks = [
 export default function AccountLinks() {
   return (
     <div className="w-full sm:w-auto">
-      <h2 className="mb-7.5 text-xl font-semibold text-dark">Account</h2>
+      <h2 className="mb-7.5 text-xl font-semibold text-white">Account</h2>
 
       <ul className="flex flex-col gap-3.5">
         {accountLinks.map((link) => (
           <li key={link.id}>
             <Link
-              className="text-base text-dark-3 duration-200 ease-out hover:text-teal"
+              className="text-base text-white/75 duration-200 ease-out hover:text-[#ffb67a]"
               href={link.href}
             >
               {link.label}

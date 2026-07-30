@@ -11,6 +11,8 @@ type Stats = {
   pendingOrders: number;
   preparingOrders: number;
   lowStockCount: number;
+  todaySales?: number;
+  todayUnits?: number;
 };
 
 const statusColor: Record<string, string> = {
@@ -55,7 +57,7 @@ export default function StoreKeeperDashboardClient() {
   }
 
   const cards = [
-    { label: "Products in catalog", value: stats?.totalProducts || 0, icon: PackageIcon, tone: "text-amber-700 bg-amber-100" },
+    { label: "Today's sales", value: formatPrice(stats?.todaySales || 0), icon: PackageIcon, tone: "text-emerald-700 bg-emerald-100", isMoney: true },
     { label: "Pending orders", value: stats?.pendingOrders || 0, icon: ClockIcon, tone: "text-orange-700 bg-orange-100" },
     { label: "In preparation", value: stats?.preparingOrders || 0, icon: GridIcon, tone: "text-blue-700 bg-blue-100" },
     { label: "Low stock items", value: stats?.lowStockCount || 0, icon: PackageIcon, tone: "text-red-700 bg-red-100" },
@@ -63,6 +65,17 @@ export default function StoreKeeperDashboardClient() {
 
   return (
     <div className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-slate-600">
+          Units sold today: <span className="font-semibold text-slate-900">{stats?.todayUnits || 0}</span>
+        </p>
+        <Link
+          href="/storekeeper/reports"
+          className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+        >
+          Open sales reports
+        </Link>
+      </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map(({ label, value, icon: Icon, tone }) => (
           <div

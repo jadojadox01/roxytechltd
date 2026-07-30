@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { MenuItem } from "./types";
-import MenuNavIcon from "./MenuNavIcon";
 import { usePathname } from "next/navigation";
 
 interface DesktopMenuProps {
@@ -25,7 +24,7 @@ const DesktopMenu = ({ menuData, stickyMenu }: DesktopMenuProps) => {
 
   return (
     <nav>
-      <ul className="flex items-center gap-6">
+      <ul className="flex items-center gap-5">
         {menuData.map((menuItem, i) => (
           <li
             key={i}
@@ -36,9 +35,14 @@ const DesktopMenu = ({ menuData, stickyMenu }: DesktopMenuProps) => {
             {menuItem.submenu ? (
               <>
                 <button
-                  className={`flex items-center gap-2 hover:text-teal font-medium ${stickyMenu ? "py-4" : "py-6"} relative text-sm font-medium ${menuItem.submenu?.some(subItem => pathname === subItem.path) ? "text-teal" : "text-dark"}`}
+                  className={`flex items-center gap-1 text-sm font-semibold transition ${
+                    stickyMenu ? "py-3" : "py-4"
+                  } ${
+                    menuItem.submenu?.some((subItem) => pathname === subItem.path)
+                      ? "text-[#ff7a1a]"
+                      : "text-[#1c2ea3] hover:text-[#ff7a1a]"
+                  }`}
                 >
-                  {menuItem.icon && <MenuNavIcon name={menuItem.icon} />}
                   {menuItem.title}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -68,7 +72,11 @@ const DesktopMenu = ({ menuData, stickyMenu }: DesktopMenuProps) => {
                     <Link
                       key={j}
                       href={subItem.path || "#"}
-                      className={`block px-4 py-2 text-sm font-medium rounded-lg hover:text-teal hover:bg-gray-2 ${subItem.path && pathname.split('?')[0] === subItem.path.split('?')[0] ? "text-teal" : "text-dark"}`}
+                      className={`block rounded-lg px-4 py-2 text-sm font-medium transition hover:bg-[#fff4ea] hover:text-[#ff7a1a] ${
+                        subItem.path && pathname.split("?")[0] === subItem.path.split("?")[0]
+                          ? "text-[#ff7a1a]"
+                          : "text-[#1c2ea3]"
+                      }`}
                     >
                       {subItem.title}
                     </Link>
@@ -78,9 +86,14 @@ const DesktopMenu = ({ menuData, stickyMenu }: DesktopMenuProps) => {
             ) : (
               <Link
                 href={menuItem.path || "#"}
-                className={`flex items-center gap-2 hover:text-teal font-medium ${stickyMenu ? "py-4" : "py-6"} relative text-sm ${menuItem.path && pathname.split('?')[0] === menuItem.path.split('?')[0] ? "text-teal" : "text-dark"}`}
+                className={`flex items-center text-sm font-semibold transition ${
+                  stickyMenu ? "py-3" : "py-4"
+                } ${
+                  menuItem.path && pathname.split("?")[0] === menuItem.path.split("?")[0]
+                    ? "text-[#ff7a1a]"
+                    : "text-[#1c2ea3] hover:text-[#ff7a1a]"
+                }`}
               >
-                {menuItem.icon && <MenuNavIcon name={menuItem.icon} />}
                 {menuItem.title}
               </Link>
             )}

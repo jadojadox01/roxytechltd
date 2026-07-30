@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/hooks/useCart";
@@ -49,6 +49,19 @@ const CheckoutForm = ({ user, paymentSettings }: Props) => {
   );
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [couponCode, setCouponCode] = useState("");
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("checkout_coupon");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.code) setCouponCode(String(parsed.code));
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const items = Object.values(cartDetails ?? {});
   const bankCardsMessage = paymentSettings.bankCardsMessage?.trim() || "Coming soon";
@@ -89,6 +102,7 @@ const CheckoutForm = ({ user, paymentSettings }: Props) => {
           items,
           totalPrice,
           paymentMethod,
+          couponCode: couponCode || undefined,
         }),
       });
 
@@ -98,6 +112,11 @@ const CheckoutForm = ({ user, paymentSettings }: Props) => {
       }
 
       clearCart();
+      try {
+        sessionStorage.removeItem("checkout_coupon");
+      } catch {
+        // ignore
+      }
       setMessage("Order placed successfully. Thank you!");
       router.push("/cart");
     } catch (error: unknown) {

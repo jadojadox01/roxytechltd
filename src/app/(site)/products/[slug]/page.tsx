@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProductBySlug } from "@/get-api-data/product";
+import { getProductBySlug, getRelatedProducts } from "@/get-api-data/product";
 import { getReviews } from "@/get-api-data/reviews";
 import { getSiteName } from "@/get-api-data/seo-setting";
 import ProductDetailClient from "./ProductDetailClient";
@@ -30,12 +30,21 @@ export default async function ProductDetailPage({ params }: Props) {
     notFound();
   }
 
-  const reviewData = await getReviews(product.slug);
+  const [reviewData, relatedProducts] = await Promise.all([
+    getReviews(product.slug),
+    getRelatedProducts(
+      product.category?.title || "",
+      product.tags || [],
+      product.id,
+      product.title
+    ),
+  ]);
 
   return (
     <ProductDetailClient
       product={product as any}
       reviewData={reviewData}
+      relatedProducts={relatedProducts as any}
     />
   );
 }

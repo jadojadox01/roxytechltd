@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { formatPrice } from "@/utils/formatePrice";
 
@@ -24,28 +24,37 @@ export default function ProductList() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
+  const mountedRef = useRef(false);
+
+  const editBase = pathname.startsWith("/storekeeper")
+    ? "/storekeeper/products"
+    : "/admin/products";
 
   const loadProducts = useCallback(async () => {
     try {
-      setLoading(true);
+      if (mountedRef.current) setLoading(true);
       const res = await fetch("/api/admin/products", {
         cache: "no-store",
         headers: { "Cache-Control": "no-cache" },
       });
       const payload = await res.json();
+      if (!mountedRef.current) return;
       setProducts(Array.isArray(payload) ? payload : []);
     } catch {
+      if (!mountedRef.current) return;
       setProducts([]);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (pathname === "/admin/products") {
-      loadProducts();
-    }
-  }, [pathname, loadProducts]);
+    mountedRef.current = true;
+    void loadProducts();
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [loadProducts]);
 
   async function handleDelete(id: string) {
     if (!window.confirm("Delete this product?")) return;
@@ -65,7 +74,7 @@ export default function ProductList() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0071CE] border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" />
       </div>
     );
   }
@@ -79,94 +88,96 @@ export default function ProductList() {
   }
 
   return (
-    <div className="overflow-x-auto -mx-4 sm:mx-0">
+    <div className="-mx-4 overflow-x-auto sm:mx-0">
       <div className="inline-block min-w-full align-middle">
         <div className="overflow-hidden rounded-lg border border-slate-200">
-          {/* Desktop Table */}
-          <table className="hidden md:table min-w-full divide-y divide-slate-200">
+          <table className="hidden min-w-full divide-y divide-slate-200 md:table">
             <thead className="bg-slate-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-700">
                   Product
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-700">
                   Category
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-700">
                   Price
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-700">
                   Stock
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-700">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
               {products.map((product) => {
-                const firstImage = Array.isArray(product.images) && product.images.length > 0 
-                  ? product.images[0] 
-                  : "/images/products/product-placeholder.svg";
-                
+                const firstImage =
+                  Array.isArray(product.images) && product.images.length > 0
+                    ? product.images[0]
+                    : "/images/products/product-placeholder.svg";
+
                 return (
-                  <tr key={product.id} className="hover:bg-slate-50 transition">
-                    <td className="px-4 py-3 whitespace-nowrap">
+                  <tr key={product.id} className="transition hover:bg-slate-50">
+                    <td className="whitespace-nowrap px-4 py-3">
                       <div className="flex items-center gap-3">
                         <img
                           src={firstImage}
                           alt={product.title}
-                          className="h-12 w-12 rounded-md object-cover shrink-0"
+                          className="h-12 w-12 shrink-0 rounded-md object-cover"
                         />
                         <div className="min-w-0">
-                          <div className="font-medium text-slate-900 truncate max-w-xs">
+                          <div className="max-w-xs truncate font-medium text-slate-900">
                             {product.title}
                           </div>
-                          <div className="text-xs text-slate-500 truncate max-w-xs">
+                          <div className="max-w-xs truncate text-xs text-slate-500">
                             {product.slug}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-4 py-3">
                       <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
                         {product.category?.title || "Uncategorized"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-right font-medium text-slate-900">
+                    <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-slate-900">
                       {formatPrice(Number(product.price || 0))}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-center">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        (product.quantity ?? 0) > 0 
-                          ? "bg-green-100 text-green-800" 
-                          : "bg-red-100 text-red-800"
-                      }`}>
+                    <td className="whitespace-nowrap px-4 py-3 text-center">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          (product.quantity ?? 0) > 0
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
                         {product.quantity ?? 0}
                       </span>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-right">
+                    <td className="whitespace-nowrap px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => window.open(`/products/${encodeURIComponent(product.slug)}`, "_blank")}
+                          onClick={() =>
+                            window.open(
+                              `/products/${encodeURIComponent(product.slug)}`,
+                              "_blank"
+                            )
+                          }
                           className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
                           title="View product"
                         >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
+                          View
                         </button>
                         <button
                           type="button"
-                          onClick={() => router.push(`/admin/products/${product.id}/edit`)}
-                          className="inline-flex items-center justify-center rounded-lg border border-[#0071CE] bg-white px-3 py-1.5 text-xs font-semibold text-[#0071CE] transition hover:bg-[#e6f1fa]"
+                          onClick={() => router.push(`${editBase}/${product.id}/edit`)}
+                          className="inline-flex items-center justify-center rounded-lg border border-[#1c2ea3] bg-white px-3 py-1.5 text-xs font-semibold text-[#1c2ea3] transition hover:bg-[#eef2ff]"
                           title="Edit product"
                         >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
+                          Edit
                         </button>
                         <button
                           type="button"
@@ -175,9 +186,7 @@ export default function ProductList() {
                           className="inline-flex items-center justify-center rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                           title="Delete product"
                         >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                          {busyId === product.id ? "..." : "Delete"}
                         </button>
                       </div>
                     </td>
@@ -187,41 +196,41 @@ export default function ProductList() {
             </tbody>
           </table>
 
-          {/* Mobile Cards */}
-          <div className="md:hidden divide-y divide-slate-200">
+          <div className="divide-y divide-slate-200 md:hidden">
             {products.map((product) => {
-              const firstImage = Array.isArray(product.images) && product.images.length > 0 
-                ? product.images[0] 
-                : "/images/products/product-placeholder.svg";
-              
+              const firstImage =
+                Array.isArray(product.images) && product.images.length > 0
+                  ? product.images[0]
+                  : "/images/products/product-placeholder.svg";
+
               return (
                 <div key={product.id} className="bg-white p-4">
                   <div className="flex items-start gap-3">
                     <img
                       src={firstImage}
                       alt={product.title}
-                      className="h-16 w-16 rounded-md object-cover shrink-0"
+                      className="h-16 w-16 shrink-0 rounded-md object-cover"
                     />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-slate-900 text-sm truncate">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate text-sm font-medium text-slate-900">
                         {product.title}
                       </h3>
-                      <p className="text-xs text-slate-500 mt-0.5 truncate">
-                        {product.slug}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <p className="mt-0.5 truncate text-xs text-slate-500">{product.slug}</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
                         <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
                           {product.category?.title || "Uncategorized"}
                         </span>
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                          (product.quantity ?? 0) > 0 
-                            ? "bg-green-100 text-green-800" 
-                            : "bg-red-100 text-red-800"
-                        }`}>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                            (product.quantity ?? 0) > 0
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
                           Stock: {product.quantity ?? 0}
                         </span>
                       </div>
-                      <div className="mt-2 font-semibold text-slate-900 text-sm">
+                      <div className="mt-2 text-sm font-semibold text-slate-900">
                         {formatPrice(Number(product.price || 0))}
                       </div>
                     </div>
@@ -229,34 +238,26 @@ export default function ProductList() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => window.open(`/products/${encodeURIComponent(product.slug)}`, "_blank")}
-                      className="flex-1 inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 gap-1.5"
+                      onClick={() =>
+                        window.open(`/products/${encodeURIComponent(product.slug)}`, "_blank")
+                      }
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
                       View
                     </button>
                     <button
                       type="button"
-                      onClick={() => router.push(`/admin/products/${product.id}/edit`)}
-                      className="flex-1 inline-flex items-center justify-center rounded-lg border border-[#0071CE] bg-white px-3 py-2 text-xs font-semibold text-[#0071CE] transition hover:bg-[#e6f1fa] gap-1.5"
+                      onClick={() => router.push(`${editBase}/${product.id}/edit`)}
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[#1c2ea3] bg-white px-3 py-2 text-xs font-semibold text-[#1c2ea3] transition hover:bg-[#eef2ff]"
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
                       Edit
                     </button>
                     <button
                       type="button"
                       disabled={busyId === product.id}
                       onClick={() => handleDelete(product.id)}
-                      className="flex-1 inline-flex items-center justify-center rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 gap-1.5"
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
                       {busyId === product.id ? "Deleting..." : "Delete"}
                     </button>
                   </div>

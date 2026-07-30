@@ -24,6 +24,7 @@ export async function GET() {
       preparingOrders,
       lowStockProducts,
       recentOrders,
+      todayCompleted,
     ] = await Promise.all([
       prismaClientInstance.product.count(),
       prismaClientInstance.order.count({ where: { status: "PENDING" } }),
@@ -46,7 +47,25 @@ export async function GET() {
             },
           })
         : Promise.resolve([]),
+      prismaClientInstance.order.findMany({
+        where: {
+          status: "COMPLETED",
+          createdAt: {
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          },
+        },
+        select: {
+          totalPrice: true,
+          items: { select: { quantity: true } },
+        },
+      }),
     ]);
+
+    const todaySales = todayCompleted.reduce((sum, o) => sum + Number(o.totalPrice), 0);
+    const todayUnits = todayCompleted.reduce(
+      (sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0),
+      0
+    );
 
     let recentActivities: unknown[] = [];
     if (hasActivityLog) {
@@ -64,6 +83,8 @@ export async function GET() {
         pendingOrders,
         preparingOrders,
         lowStockCount: lowStockProducts.length,
+        todaySales,
+        todayUnits,
       },
       lowStockProducts,
       recentActivities,

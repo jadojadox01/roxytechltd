@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
+import toast from "react-hot-toast";
 import { useCart } from "@/hooks/useCart";
 import { formatPrice } from "@/utils/formatePrice";
 
@@ -17,7 +19,55 @@ const CartPageContent = () => {
     goToCheckout,
   } = useCart();
 
+  const [couponCode, setCouponCode] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discountAmount: number;
+  } | null>(null);
+
   const items = Object.values(cartDetails ?? {});
+  const discountAmount = appliedCoupon?.discountAmount || 0;
+  const payable = Math.max(0, totalPrice - discountAmount);
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error("Enter a coupon code");
+      return;
+    }
+    setCouponLoading(true);
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode, subtotal: totalPrice }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setAppliedCoupon(null);
+        toast.error(data.message || "Invalid coupon");
+        return;
+      }
+      setAppliedCoupon({
+        code: data.coupon.code,
+        discountAmount: data.coupon.discountAmount,
+      });
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(
+          "checkout_coupon",
+          JSON.stringify({
+            code: data.coupon.code,
+            discountAmount: data.coupon.discountAmount,
+          })
+        );
+      }
+      toast.success(`Coupon ${data.coupon.code} applied`);
+    } catch {
+      toast.error("Could not validate coupon");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -28,7 +78,7 @@ const CartPageContent = () => {
         </p>
         <Link
           href="/shop-without-sidebar"
-          className="mt-6 inline-flex rounded-lg bg-[#02AAA4] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#028f86]"
+          className="mt-6 inline-flex rounded-lg bg-[#ff7a1a] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#e7680d]"
         >
           Continue shopping
         </Link>
@@ -57,7 +107,7 @@ const CartPageContent = () => {
             <div className="flex-1">
               <Link
                 href={`/products/${item.slug}`}
-                className="text-lg font-semibold text-slate-900 hover:text-[#02AAA4]"
+                className="text-lg font-semibold text-slate-900 hover:text-[#1c2ea3]"
               >
                 {item.name}
               </Link>
@@ -75,7 +125,7 @@ const CartPageContent = () => {
               <div className="mt-4 flex items-center gap-2">
                 <button
                   onClick={() => decrementItem(item.id)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-lg text-slate-700 transition hover:border-[#02AAA4] hover:text-[#02AAA4]"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-lg text-slate-700 transition hover:border-[#1c2ea3] hover:text-[#1c2ea3]"
                   aria-label="Decrease quantity"
                 >
                   -
@@ -85,7 +135,7 @@ const CartPageContent = () => {
                 </span>
                 <button
                   onClick={() => incrementItem(item.id)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-lg text-slate-700 transition hover:border-[#02AAA4] hover:text-[#02AAA4]"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-lg text-slate-700 transition hover:border-[#1c2ea3] hover:text-[#1c2ea3]"
                   aria-label="Increase quantity"
                 >
                   +
@@ -109,7 +159,7 @@ const CartPageContent = () => {
 
         <button
           onClick={() => clearCart()}
-          className="text-sm font-semibold text-slate-600 transition hover:text-[#02AAA4]"
+          className="text-sm font-semibold text-slate-600 transition hover:text-[#1c2ea3]"
         >
           Clear cart
         </button>
@@ -122,22 +172,49 @@ const CartPageContent = () => {
             <span>Items</span>
             <span>{cartCount}</span>
           </div>
-          <div className="flex items-center justify-between text-base font-semibold text-slate-900">
+          <div className="flex items-center justify-between">
             <span>Subtotal</span>
             <span>{formatPrice(totalPrice)}</span>
           </div>
+          {appliedCoupon && (
+            <div className="flex items-center justify-between text-[#ff7a1a]">
+              <span>Discount ({appliedCoupon.code})</span>
+              <span>-{formatPrice(discountAmount)}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-base font-semibold text-slate-900">
+            <span>Total</span>
+            <span>{formatPrice(payable)}</span>
+          </div>
+        </div>
+
+        <div className="mt-5 flex gap-2">
+          <input
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+            placeholder="Promo code"
+            className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+          />
+          <button
+            type="button"
+            onClick={applyCoupon}
+            disabled={couponLoading}
+            className="rounded-lg border border-[#1c2ea3] px-3 py-2 text-sm font-semibold text-[#1c2ea3] hover:bg-[#eef2ff] disabled:opacity-50"
+          >
+            {couponLoading ? "..." : "Apply"}
+          </button>
         </div>
 
         <button
           type="button"
           onClick={goToCheckout}
-          className="mt-6 flex w-full justify-center rounded-lg bg-[#02AAA4] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#028f86]"
+          className="mt-6 flex w-full justify-center rounded-lg bg-[#ff7a1a] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#e7680d]"
         >
           Proceed to checkout
         </button>
         <Link
           href="/shop-without-sidebar"
-          className="mt-3 flex w-full justify-center rounded-lg border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#02AAA4] hover:text-[#02AAA4]"
+          className="mt-3 flex w-full justify-center rounded-lg border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#1c2ea3] hover:text-[#1c2ea3]"
         >
           Continue shopping
         </Link>

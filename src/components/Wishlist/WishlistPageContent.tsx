@@ -25,7 +25,7 @@ const WishlistPageContent = () => {
 
   if (!hasMounted) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+      <div className="rounded-2xl border border-[#e8ecff] bg-white p-10 text-center shadow-sm">
         <p className="text-sm text-slate-600">Loading your wishlist...</p>
       </div>
     );
@@ -33,7 +33,7 @@ const WishlistPageContent = () => {
 
   if (wishlistItems.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
+      <div className="rounded-2xl border border-dashed border-[#d4ddff] bg-white p-10 text-center shadow-sm">
         <h2 className="text-2xl font-semibold text-slate-900">
           Your wishlist is empty
         </h2>
@@ -42,7 +42,7 @@ const WishlistPageContent = () => {
         </p>
         <Link
           href="/shop-without-sidebar"
-          className="mt-6 inline-flex rounded-lg bg-[#02AAA4] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#028f86]"
+          className="mt-6 inline-flex rounded-lg bg-[#ff7a1a] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#e7680d]"
         >
           Browse products
         </Link>
@@ -102,7 +102,7 @@ const WishlistPageContent = () => {
           return (
             <div
               key={item.id}
-              className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center"
+              className="flex flex-col gap-4 rounded-2xl border border-[#e8ecff] bg-white p-4 shadow-sm sm:flex-row sm:items-center"
             >
               <Link
                 href={`/products/${item.slug}`}
@@ -120,7 +120,7 @@ const WishlistPageContent = () => {
               <div className="flex-1">
                 <Link
                   href={`/products/${item.slug}`}
-                  className="text-lg font-semibold text-slate-900 hover:text-[#02AAA4]"
+                  className="text-lg font-semibold text-slate-900 hover:text-[#1c2ea3]"
                 >
                   {item.title}
                 </Link>
@@ -140,7 +140,7 @@ const WishlistPageContent = () => {
                   <button
                     onClick={() => handleAddToCart(item)}
                     disabled={item.quantity < 1 || isAlreadyInCart}
-                    className="inline-flex rounded-lg border border-[#02AAA4] px-4 py-2 text-sm font-semibold text-[#02AAA4] transition hover:bg-[#02AAA4]/5 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex rounded-lg border border-[#1c2ea3] px-4 py-2 text-sm font-semibold text-[#1c2ea3] transition hover:bg-[#eef2ff] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isAlreadyInCart
                       ? "In cart"
@@ -151,7 +151,7 @@ const WishlistPageContent = () => {
                   <button
                     onClick={() => handleBuyNow(item)}
                     disabled={item.quantity < 1}
-                    className="inline-flex rounded-lg bg-[#02AAA4] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#028f86] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex rounded-lg bg-[#ff7a1a] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#e7680d] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Buy Now
                   </button>
@@ -169,13 +169,13 @@ const WishlistPageContent = () => {
 
         <button
           onClick={() => dispatch(removeAllItemsFromWishlist())}
-          className="text-sm font-semibold text-slate-600 transition hover:text-[#02AAA4]"
+          className="text-sm font-semibold text-slate-600 transition hover:text-[#1c2ea3]"
         >
           Clear wishlist
         </button>
       </div>
 
-      <aside className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+      <aside className="rounded-2xl border border-[#e8ecff] bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-slate-900">Wishlist summary</h2>
         <div className="mt-5 space-y-3 text-sm text-slate-600">
           <div className="flex items-center justify-between">
@@ -186,13 +186,13 @@ const WishlistPageContent = () => {
 
         <Link
           href="/shop-without-sidebar"
-          className="mt-6 flex w-full justify-center rounded-lg bg-[#02AAA4] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#028f86]"
+          className="mt-6 flex w-full justify-center rounded-lg bg-[#ff7a1a] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#e7680d]"
         >
           Continue shopping
         </Link>
         <Link
           href="/cart"
-          className="mt-3 flex w-full justify-center rounded-lg border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#02AAA4] hover:text-[#02AAA4]"
+          className="mt-3 flex w-full justify-center rounded-lg border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#1c2ea3] hover:text-[#1c2ea3]"
         >
           View cart
         </Link>

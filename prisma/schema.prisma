@@ -25,6 +25,7 @@ model User {
   wishlist       Wishlist?
   notifications  Notification[]
   passwordResets PasswordResetToken[]
+  expenses       Expense[]
 }
 
 model PasswordResetToken {
@@ -327,6 +328,26 @@ model Coupon {
   createdAt      DateTime  @default(now())
 }
 
+// ─── Accounting ─────────────────────────────────────────────────────────────
+
+model Expense {
+  id          String   @id @default(uuid())
+  title       String
+  category    String
+  amount      Decimal
+  expenseDate DateTime @default(now())
+  notes       String?
+  paymentMethod String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([expenseDate])
+  @@index([category])
+  @@index([createdById])
+}
+
 // ─── Notifications ──────────────────────────────────────────────────────────
 
 model Notification {
@@ -387,6 +408,9 @@ model SiteSetting {
   bankCardsEnabled Boolean @default(false)
   bankCardsMessage String? @default("Coming soon")
   codEnabled     Boolean  @default(true)
+  heroEyebrow    String?  @default("New collection")
+  heroTitle      String?  @default("Elevate Your Shopping Journey")
+  heroSubtitle   String?  @default("Premium stationery, school & office materials — everything you need, all in one shop. Fast delivery across Rwanda.")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -425,16 +449,16 @@ model HeroSlider {
   id           Int      @id @default(autoincrement())
   sliderName   String
   sliderImage  String
-  discountRate Int
+  discountRate Int      @default(0)
   slug         String   @unique
-  productId    String
+  productId    String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   headline     String?
   description  String?
   ctaLabel     String?  @default("Shop Now")
   sortOrder    Int      @default(0)
-  product      Product  @relation(fields: [productId], references: [id])
+  product      Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 }
 
 model Countdown {

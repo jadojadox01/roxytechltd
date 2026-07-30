@@ -17,12 +17,15 @@ export default async function ShopWithSidebarPage() {
   ]);
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-24 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-50 px-4 py-24 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-3xl font-semibold text-slate-900">Shop with Sidebar</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Browse our collection of products
+        <div className="mb-8 overflow-hidden rounded-3xl border border-[#e0e7ff] bg-gradient-to-r from-[#1a255f] to-[#24337f] p-6 text-white shadow-sm sm:p-8">
+          <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide text-white/90">
+            Live catalog
+          </p>
+          <h1 className="mt-4 text-3xl font-black sm:text-4xl">Shop Products</h1>
+          <p className="mt-2 text-sm text-white/85">
+            Browse products using categories and filters.
           </p>
         </div>
 

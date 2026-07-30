@@ -15,8 +15,8 @@ export default async function CheckoutPage() {
   const siteSettings = await getSiteSettings();
 
   const paymentSettings = {
-    momoPhone: siteSettings?.momoPhone ?? "0783428632",
-    momoAccountName: siteSettings?.momoAccountName ?? "Grace NKURIKIYINKA",
+    momoPhone: siteSettings?.momoPhone ?? null,
+    momoAccountName: siteSettings?.momoAccountName ?? null,
     momoEnabled: siteSettings?.momoEnabled ?? true,
     bankCardsEnabled: siteSettings?.bankCardsEnabled ?? false,
     bankCardsMessage: siteSettings?.bankCardsMessage ?? "Coming soon",
