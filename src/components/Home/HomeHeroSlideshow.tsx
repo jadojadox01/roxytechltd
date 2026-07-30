@@ -15,25 +15,11 @@ export type HomeHeroSlide = {
   productSlug: string | null;
 };
 
-type TrustChip = {
-  title: string;
-  text: string;
-  position: string;
-};
-
 type Props = {
   slides: HomeHeroSlide[];
-  currency: string;
-  ratingLabel: string;
-  ratingSub: string;
 };
 
-export default function HomeHeroSlideshow({
-  slides,
-  currency,
-  ratingLabel,
-  ratingSub,
-}: Props) {
+export default function HomeHeroSlideshow({ slides }: Props) {
   const [index, setIndex] = useState(0);
   const hasSlides = slides.length > 0;
 
@@ -44,24 +30,6 @@ export default function HomeHeroSlideshow({
     }, 4500);
     return () => window.clearInterval(timer);
   }, [slides.length]);
-
-  const chips: TrustChip[] = [
-    {
-      title: "Free delivery",
-      text: `Orders above 20k ${currency}`,
-      position: "left-3 top-4 sm:left-5 sm:top-6",
-    },
-    {
-      title: "MTN MoMo & Card",
-      text: "Accepted payments",
-      position: "left-3 top-1/2 -translate-y-1/2 sm:left-5",
-    },
-    {
-      title: ratingLabel,
-      text: ratingSub,
-      position: "right-3 bottom-5 sm:right-5 sm:bottom-8",
-    },
-  ];
 
   const active = hasSlides ? slides[index] : null;
   const href = active?.productSlug
@@ -135,16 +103,6 @@ export default function HomeHeroSlideshow({
           </div>
         ) : null}
       </div>
-
-      {chips.map((chip) => (
-        <div
-          key={chip.title}
-          className={`absolute z-20 rounded-xl border border-white/30 bg-white/95 px-4 py-2 text-slate-800 shadow-lg ${chip.position}`}
-        >
-          <p className="text-sm font-bold">{chip.title}</p>
-          <p className="text-xs text-slate-500">{chip.text}</p>
-        </div>
-      ))}
     </div>
   );
 }

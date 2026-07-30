@@ -3,68 +3,18 @@ import {
   getFeaturedProducts,
   getNewArrivalsProduct,
 } from "@/get-api-data/product";
-import { getCategories } from "@/get-api-data/category";
 import { getSiteSettings } from "@/get-api-data/site-settings";
 import { getHeroSliders } from "@/get-api-data/hero";
 import Newsletter from "@/components/Common/Newsletter";
+import ProductItem from "@/components/Common/ProductItem";
 import HomeHeroSlideshow from "@/components/Home/HomeHeroSlideshow";
+import CategoryGrid from "@/components/Home/Categories/CategoryGrid";
 import { prisma } from "@/lib/prismaDB";
 import {
   DEFAULT_HERO_SUBTITLE,
   DEFAULT_HERO_TITLE,
 } from "@/lib/site-settings-db";
-
-function ProductCard({ item }: { item: any }) {
-  const image =
-    item.productVariants?.find((v: { isDefault?: boolean; image?: string | null }) => v.isDefault)
-      ?.image ||
-    item.productVariants?.[0]?.image ||
-    item.images?.[0] ||
-    "/images/products/product-placeholder.svg";
-  const currentPrice = Number(item.discountedPrice ?? item.price ?? 0);
-  const oldPrice = Number(item.price ?? 0);
-
-  return (
-    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <Link href={`/products/${item.slug}`} className="block bg-slate-100 p-6 text-center">
-        <img
-          src={image}
-          alt={item.title}
-          className="mx-auto h-36 w-full max-w-[180px] object-contain"
-        />
-      </Link>
-      <div className="p-4">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-          Live catalog
-        </p>
-        <Link
-          href={`/products/${item.slug}`}
-          className="mt-1 block text-sm font-bold text-slate-900 hover:text-[#1c2ea3]"
-        >
-          {item.title}
-        </Link>
-        <div className="mt-3 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-base font-black text-[#ff7a1a]">
-              {currentPrice.toLocaleString("en-RW")} RWF
-            </p>
-            {item.discountedPrice ? (
-              <p className="text-xs text-slate-400 line-through">
-                {oldPrice.toLocaleString("en-RW")} RWF
-              </p>
-            ) : null}
-          </div>
-          <Link
-            href={`/products/${item.slug}`}
-            className="rounded-lg bg-[#1c2ea3] px-3 py-2 text-xs font-bold text-white hover:bg-[#16257e]"
-          >
-            View
-          </Link>
-        </div>
-      </div>
-    </article>
-  );
-}
+import type { Product } from "@/types/product";
 
 function splitHeroTitle(title: string) {
   const words = title.trim().split(/\s+/).filter(Boolean);
@@ -82,36 +32,22 @@ const Home = async () => {
     siteSettings,
     featuredProducts,
     newArrivalProducts,
-    categories,
     productCount,
     customerCount,
-    reviewStats,
     heroSliders,
   ] = await Promise.all([
     getSiteSettings(),
     getFeaturedProducts(),
     getNewArrivalsProduct(),
-    getCategories(),
     prisma.product.count().catch(() => 0),
     prisma.user.count({ where: { role: "USER" } }).catch(() => 0),
-    prisma.review
-      .aggregate({
-        where: { isApproved: true },
-        _count: { ratings: true },
-        _avg: { ratings: true },
-      })
-      .catch(() => ({ _count: { ratings: 0 }, _avg: { ratings: null } })),
     getHeroSliders().catch(() => []),
   ]);
-
-  const categoryList = categories.slice(0, 6);
 
   const heroTitle = siteSettings?.heroTitle?.trim() || DEFAULT_HERO_TITLE;
   const { lead: heroLead, accent: heroAccent } = splitHeroTitle(heroTitle);
   const heroSubtitle = siteSettings?.heroSubtitle?.trim() || DEFAULT_HERO_SUBTITLE;
   const heroEyebrow = siteSettings?.heroEyebrow?.trim() || "New collection";
-  const rating = Number(reviewStats?._avg?.ratings || 0);
-  const ratingCount = Number(reviewStats?._count?.ratings || 0);
 
   const slides = (heroSliders || []).map((slide) => ({
     id: slide.id,
@@ -175,18 +111,11 @@ const Home = async () => {
             </div>
           </div>
 
-          <HomeHeroSlideshow
-            slides={slides}
-            currency={siteSettings?.currency || "RWF"}
-            ratingLabel={ratingCount > 0 ? `${rating.toFixed(1)} / 5 rating` : "Trusted quality"}
-            ratingSub={
-              ratingCount > 0
-                ? `${ratingCount.toLocaleString("en-US")} real reviews`
-                : "Growing reviews"
-            }
-          />
+          <HomeHeroSlideshow slides={slides} />
         </div>
       </section>
+
+      <CategoryGrid />
 
       <section className="mx-auto mt-12 w-full max-w-7xl px-4 sm:px-8 xl:px-0" id="products">
         <div className="mb-6 flex items-center justify-between gap-4">
@@ -199,9 +128,9 @@ const Home = async () => {
         </div>
 
         {featuredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {featuredProducts.map((item) => (
-              <ProductCard key={item.id} item={item} />
+              <ProductItem key={item.id} item={item as Product} />
             ))}
           </div>
         ) : (
@@ -226,36 +155,11 @@ const Home = async () => {
           </div>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {newArrivalProducts.map((item) => (
-              <ProductCard key={item.id} item={item} />
+              <ProductItem key={item.id} item={item as Product} />
             ))}
           </div>
         </section>
       ) : null}
-
-      <section className="mx-auto mt-14 w-full max-w-7xl px-4 sm:px-8 xl:px-0" id="categories">
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-black text-slate-900 md:text-3xl">
-            Shop by <span className="text-[#ff7a1a]">Category</span>
-          </h2>
-          <Link href="/shop-with-sidebar" className="text-sm font-bold text-[#1c2ea3] hover:underline">
-            Browse shop
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {categoryList.map((cat) => (
-            <Link
-              key={cat.id}
-              href={`/categories/${cat.slug}`}
-              className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-[#1c2ea3] hover:shadow-sm"
-            >
-              <h3 className="text-lg font-bold text-slate-900">{cat.title}</h3>
-              <p className="mt-2 line-clamp-2 text-sm text-slate-600">{cat.description || "Explore this category"}</p>
-              <p className="mt-4 text-sm font-semibold text-[#1c2ea3]">View products →</p>
-            </Link>
-          ))}
-        </div>
-      </section>
 
       <Newsletter />
     </main>

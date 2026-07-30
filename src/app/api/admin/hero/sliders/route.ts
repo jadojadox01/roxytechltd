@@ -7,6 +7,9 @@ import { createHeroSlider, listHeroSlidersAdmin } from "@/lib/hero-db";
 import { uploadImageFile } from "@/lib/upload-image";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
+
+const MAX_IMAGE_BYTES = 4.5 * 1024 * 1024;
 
 function slugify(value: string) {
   return value
@@ -16,8 +19,18 @@ function slugify(value: string) {
     .slice(0, 60);
 }
 
-async function saveImage(file: File, prefix: string) {
-  return uploadImageFile(file, "hero/sliders", prefix);
+function serializeSlider(slider: Record<string, unknown>) {
+  return {
+    ...slider,
+    createdAt:
+      slider.createdAt instanceof Date
+        ? slider.createdAt.toISOString()
+        : slider.createdAt,
+    updatedAt:
+      slider.updatedAt instanceof Date
+        ? slider.updatedAt.toISOString()
+        : slider.updatedAt,
+  };
 }
 
 export async function GET() {
@@ -78,7 +91,27 @@ export async function POST(req: Request) {
     }
 
     if (!(imageFile instanceof File) || imageFile.size === 0) {
-      return NextResponse.json({ success: false, message: "Slide image is required" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Slide image is required" },
+        { status: 400 }
+      );
+    }
+
+    if (imageFile.size > MAX_IMAGE_BYTES) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Image is too large. Please upload an image under 4MB.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (imageFile.type && !imageFile.type.startsWith("image/")) {
+      return NextResponse.json(
+        { success: false, message: "Only image files are allowed for slides." },
+        { status: 400 }
+      );
     }
 
     let product: { id: string; title: string; slug: string } | null = null;
@@ -88,11 +121,30 @@ export async function POST(req: Request) {
         select: { id: true, title: true, slug: true },
       });
       if (!product) {
-        return NextResponse.json({ success: false, message: "Selected product not found" }, { status: 400 });
+        return NextResponse.json(
+          { success: false, message: "Selected product not found" },
+          { status: 400 }
+        );
       }
     }
 
-    const sliderImage = await saveImage(imageFile, "slide");
+    let sliderImage: string;
+    try {
+      sliderImage = await uploadImageFile(imageFile, "hero/sliders", "slide");
+    } catch (uploadError) {
+      console.error("Hero slide image upload error:", uploadError);
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            uploadError instanceof Error
+              ? uploadError.message
+              : "Failed to upload slide image",
+        },
+        { status: 500 }
+      );
+    }
+
     const baseSlug = slugify(headline || sliderName) || "hero-slide";
     const slug = `${baseSlug}-${Date.now()}`;
 
@@ -107,6 +159,13 @@ export async function POST(req: Request) {
       ctaLabel,
       sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
     });
+
+    if (!slider?.id) {
+      return NextResponse.json(
+        { success: false, message: "Slide was not saved to the database." },
+        { status: 500 }
+      );
+    }
 
     try {
       revalidateTag("heroSliders", "max");
@@ -135,7 +194,7 @@ export async function POST(req: Request) {
       {
         success: true,
         slider: {
-          ...slider,
+          ...serializeSlider(slider as unknown as Record<string, unknown>),
           product: product ? { title: product.title, slug: product.slug } : null,
         },
       },

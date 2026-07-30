@@ -117,6 +117,14 @@ export default function AdminHeroClient({ products }: { products: ProductOption[
       toast.error("Slide label and image are required.");
       return;
     }
+    if (slideImage.size > 4.5 * 1024 * 1024) {
+      toast.error("Image is too large. Please use an image under 4MB.");
+      return;
+    }
+    if (slideImage.type && !slideImage.type.startsWith("image/")) {
+      toast.error("Please choose a valid image file.");
+      return;
+    }
     setSaving(true);
     try {
       const formData = new FormData();

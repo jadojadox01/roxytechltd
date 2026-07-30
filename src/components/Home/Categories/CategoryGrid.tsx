@@ -1,5 +1,4 @@
 import { getCategories } from "@/get-api-data/category";
-import { Category } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import SectionHeader from "../shared/SectionHeader";
@@ -14,14 +13,14 @@ const resolveImage = (image: string | null) => {
 };
 
 const CategoryGrid = async () => {
-  const categories: Category[] = await getCategories();
+  const categories = await getCategories();
 
   if (!categories || categories.length === 0) return null;
 
   const items = categories.slice(0, 8);
 
   return (
-    <section className="overflow-hidden">
+    <section className="overflow-hidden pt-10" id="categories">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-8 xl:px-0">
         <SectionHeader
           eyebrow="Browse"
@@ -35,11 +34,11 @@ const CategoryGrid = async () => {
             <Link
               key={category.id}
               href={`/categories/${category.slug}`}
-              className="group relative overflow-hidden rounded-2xl border border-gray-3 bg-white transition duration-300 hover:-translate-y-1 hover:border-teal/40 hover:shadow-lg hover:shadow-teal/10"
+              className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:border-[#1c2ea3]/40 hover:shadow-lg"
             >
-              <div className="absolute inset-0 bg-gradient-to-t from-dark/60 via-dark/10 to-transparent opacity-0 transition duration-300 group-hover:opacity-100" />
-              <div className="flex flex-col items-center p-5 text-center sm:p-6">
-                <div className="mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-gray-1 ring-1 ring-gray-3/50 transition duration-300 group-hover:ring-teal/30 sm:h-24 sm:w-24">
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1c2ea3]/70 via-[#1c2ea3]/15 to-transparent opacity-0 transition duration-300 group-hover:opacity-100" />
+              <div className="relative z-10 flex flex-col items-center p-5 text-center sm:p-6">
+                <div className="mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-slate-50 ring-1 ring-slate-200 transition duration-300 group-hover:ring-white/40 sm:h-24 sm:w-24">
                   <Image
                     src={resolveImage(category.image)}
                     alt={category.title}
@@ -48,14 +47,14 @@ const CategoryGrid = async () => {
                     className="h-16 w-16 object-cover transition duration-500 group-hover:scale-110 sm:h-20 sm:w-20"
                   />
                 </div>
-                <h3 className="line-clamp-1 text-sm font-semibold text-dark transition group-hover:text-teal sm:text-base">
+                <h3 className="line-clamp-1 text-sm font-semibold text-slate-900 transition group-hover:text-white sm:text-base">
                   {category.title}
                 </h3>
-                <span className="mt-1 text-xs text-dark-4">
+                <span className="mt-1 text-xs text-slate-500 transition group-hover:text-white/80">
                   {category.productCount || 0} products
                 </span>
               </div>
-              <div className="absolute bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-teal text-white opacity-0 transition duration-300 group-hover:opacity-100">
+              <div className="absolute bottom-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[#ff7a1a] text-white opacity-0 transition duration-300 group-hover:opacity-100">
                 <ArrowRightIcon className="h-4 w-4" />
               </div>
             </Link>

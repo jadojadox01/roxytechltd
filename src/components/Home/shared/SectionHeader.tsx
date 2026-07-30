@@ -30,15 +30,15 @@ export default function SectionHeader({
     >
       <div className={isCenter ? "max-w-2xl" : ""}>
         {eyebrow && (
-          <span className="mb-2 inline-flex items-center rounded-full bg-teal/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-teal">
+          <span className="mb-2 inline-flex items-center rounded-full bg-[#1c2ea3]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#1c2ea3]">
             {eyebrow}
           </span>
         )}
-        <h2 className="text-2xl font-bold tracking-tight text-dark sm:text-3xl">
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           {title}
         </h2>
         {description && (
-          <p className={`mt-2 text-base text-dark-3 ${isCenter ? "mx-auto" : "max-w-xl"}`}>
+          <p className={`mt-2 text-base text-slate-600 ${isCenter ? "mx-auto" : "max-w-xl"}`}>
             {description}
           </p>
         )}
@@ -46,7 +46,7 @@ export default function SectionHeader({
       {href && !isCenter && (
         <Link
           href={href}
-          className="group inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-teal transition hover:text-teal-dark"
+          className="group inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-[#1c2ea3] transition hover:text-[#16257e]"
         >
           {linkLabel}
           <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" />

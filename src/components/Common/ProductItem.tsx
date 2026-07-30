@@ -10,7 +10,6 @@ import { calculateDiscountPercentage } from "@/utils/calculateDiscountPercentage
 import { formatPrice } from "@/utils/formatePrice";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { useContext } from "react";
@@ -27,7 +26,6 @@ const ProductItem = ({ item, bgClr = "white" }: Props) => {
   const dispatch = useDispatch<AppDispatch>();
   const { addItem, buyNow, cartDetails } = useCart();
   const wishlistItems = useAppSelector((state) => state.wishlistReducer.items);
-  const pathUrl = usePathname();
 
   const isAlradyAdded = Object.values(cartDetails ?? {}).some(
     (cartItem) => cartItem.id === item.id
@@ -43,9 +41,7 @@ const ProductItem = ({ item, bgClr = "white" }: Props) => {
       ? defaultVariant.image
       : item?.images?.find((image) => image?.trim()) || fallbackImage;
 
-  const productHref = pathUrl.includes("products")
-    ? `${item?.slug}`
-    : `products/${item?.slug}`;
+  const productHref = `/products/${item?.slug}`;
 
   const cartItem = {
     id: item.id,
@@ -111,10 +107,10 @@ const ProductItem = ({ item, bgClr = "white" }: Props) => {
   const bgClass = bgClr === "white" ? "bg-white" : "bg-[#F6F7FB]";
 
   return (
-    <div className="group flex h-full flex-col rounded-xl border border-gray-3 bg-white p-3 transition duration-200 hover:border-[#02AAA4] hover:shadow-lg">
+    <div className="group flex h-full flex-col rounded-xl border border-slate-200 bg-white p-3 transition duration-200 hover:border-[#1c2ea3] hover:shadow-lg">
       <div className={`relative mb-3 overflow-hidden rounded-lg ${bgClass}`}>
         {item.discountedPrice && item.discountedPrice > 0 ? (
-          <span className="absolute left-2 top-2 z-10 rounded-full bg-yellow px-2 py-1 text-xs font-semibold text-dark">
+          <span className="absolute left-2 top-2 z-10 rounded-full bg-[#ff7a1a] px-2 py-1 text-xs font-semibold text-white">
             {calculateDiscountPercentage(item.discountedPrice, item.price)}% OFF
           </span>
         ) : null}
@@ -138,7 +134,7 @@ const ProductItem = ({ item, bgClr = "white" }: Props) => {
           <button
             onClick={handleQuickViewUpdate}
             aria-label="Quick view"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-3 bg-white text-dark transition hover:border-[#02AAA4] hover:text-[#02AAA4]"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-800 transition hover:border-[#1c2ea3] hover:text-[#1c2ea3]"
           >
             <EyeIcon />
           </button>
@@ -147,8 +143,8 @@ const ProductItem = ({ item, bgClr = "white" }: Props) => {
             aria-label="Add to wishlist"
             className={`flex h-9 w-9 items-center justify-center rounded-lg border bg-white transition ${
               isAlradyWishListed
-                ? "border-[#02AAA4] text-[#02AAA4]"
-                : "border-gray-3 text-dark hover:border-[#02AAA4] hover:text-[#02AAA4]"
+                ? "border-[#ff7a1a] text-[#ff7a1a]"
+                : "border-slate-200 text-slate-800 hover:border-[#ff7a1a] hover:text-[#ff7a1a]"
             }`}
           >
             <svg
@@ -168,23 +164,23 @@ const ProductItem = ({ item, bgClr = "white" }: Props) => {
         </div>
       </div>
 
-      <h3 className="mb-1.5 line-clamp-2 min-h-[2.5rem] text-sm font-medium text-dark transition hover:text-[#02AAA4]">
+      <h3 className="mb-1.5 line-clamp-2 min-h-[2.5rem] text-sm font-medium text-slate-900 transition hover:text-[#1c2ea3]">
         <Link href={productHref}>{item.title}</Link>
       </h3>
 
       <div className="mb-3 flex items-center gap-2">
-        <span className="text-lg font-bold text-dark">
+        <span className="text-lg font-bold text-slate-900">
           {formatPrice(item.discountedPrice || item.price)}
         </span>
         {item.discountedPrice ? (
-          <span className="text-sm text-dark-4 line-through">{formatPrice(item.price)}</span>
+          <span className="text-sm text-slate-400 line-through">{formatPrice(item.price)}</span>
         ) : null}
       </div>
 
       {isAlradyAdded ? (
         <Link
           href="/cart"
-          className="mt-auto w-full rounded-full bg-[#0071CE] py-2.5 text-center text-sm font-semibold text-white transition hover:bg-[#005fb0]"
+          className="mt-auto w-full rounded-full bg-[#1c2ea3] py-2.5 text-center text-sm font-semibold text-white transition hover:bg-[#16257e]"
         >
           View in Cart
         </Link>
@@ -193,14 +189,14 @@ const ProductItem = ({ item, bgClr = "white" }: Props) => {
           <button
             onClick={handleAddToCart}
             disabled={item.quantity < 1}
-            className="w-full rounded-full border border-[#02AAA4] py-2.5 text-xs font-semibold text-[#02AAA4] transition hover:bg-[#02AAA4]/5 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+            className="w-full rounded-full border border-[#1c2ea3] py-2.5 text-xs font-semibold text-[#1c2ea3] transition hover:bg-[#1c2ea3]/5 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
           >
             {item.quantity > 0 ? "Add to Cart" : "Out of Stock"}
           </button>
           <button
             onClick={handleBuyNow}
             disabled={item.quantity < 1}
-            className="w-full rounded-full bg-[#02AAA4] py-2.5 text-xs font-semibold text-white transition hover:bg-[#028f86] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+            className="w-full rounded-full bg-[#ff7a1a] py-2.5 text-xs font-semibold text-white transition hover:bg-[#e7680d] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
           >
             Buy Now
           </button>

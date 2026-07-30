@@ -47,6 +47,21 @@ async function ensureHeroSliderSchema() {
   for (const statement of sql) {
     await prismaClientInstance.$executeRawUnsafe(statement).catch(() => undefined);
   }
+
+  // Prefer SetNull so optional product links never block inserts/deletes.
+  await prismaClientInstance
+    .$executeRawUnsafe(
+      `ALTER TABLE "HeroSlider" DROP CONSTRAINT IF EXISTS "HeroSlider_productId_fkey"`
+    )
+    .catch(() => undefined);
+  await prismaClientInstance
+    .$executeRawUnsafe(
+      `ALTER TABLE "HeroSlider"
+       ADD CONSTRAINT "HeroSlider_productId_fkey"
+       FOREIGN KEY ("productId") REFERENCES "Product"("id")
+       ON DELETE SET NULL ON UPDATE CASCADE`
+    )
+    .catch(() => undefined);
 }
 
 export async function listHeroSlidersAdmin() {
