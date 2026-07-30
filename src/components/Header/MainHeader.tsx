@@ -109,8 +109,8 @@ const MainHeader = ({ headerData, siteName = "Shop", siteSettings, categories = 
 
   const defaultHeaderText =
     currency === "RWF"
-      ? "Free delivery on orders above 20,000 RWF • MTN MoMo & Airtel Money accepted • Kigali same-day delivery"
-      : "Free delivery on qualifying orders";
+      ? `${displaySiteName} — stationery, school & office supplies across Rwanda`
+      : `Shop quality products at ${displaySiteName}`;
 
   const dynamicMenu: MenuItem[] = [
     { title: "Home", path: "/" },
