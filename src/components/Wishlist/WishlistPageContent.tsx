@@ -51,11 +51,6 @@ const WishlistPageContent = () => {
   }
 
   const handleAddToCart = (item: (typeof wishlistItems)[number]) => {
-    if (item.quantity < 1) {
-      toast.error("This product is out of stock!");
-      return;
-    }
-
     addItem({
       id: item.id,
       name: item.title,
@@ -72,11 +67,6 @@ const WishlistPageContent = () => {
   };
 
   const handleBuyNow = (item: (typeof wishlistItems)[number]) => {
-    if (item.quantity < 1) {
-      toast.error("This product is out of stock!");
-      return;
-    }
-
     buyNow({
       id: item.id,
       name: item.title,
@@ -132,26 +122,17 @@ const WishlistPageContent = () => {
                     Color: {item.color}
                   </p>
                 )}
-                <p className="mt-1 text-sm text-slate-500">
-                  {item.quantity > 0 ? "In stock" : "Out of stock"}
-                </p>
-
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                   <button
                     onClick={() => handleAddToCart(item)}
-                    disabled={item.quantity < 1 || isAlreadyInCart}
+                    disabled={isAlreadyInCart}
                     className="inline-flex rounded-lg border border-[#1c2ea3] px-4 py-2 text-sm font-semibold text-[#1c2ea3] transition hover:bg-[#eef2ff] disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {isAlreadyInCart
-                      ? "In cart"
-                      : item.quantity > 0
-                        ? "Add to cart"
-                        : "Out of stock"}
+                    {isAlreadyInCart ? "In cart" : "Add to cart"}
                   </button>
                   <button
                     onClick={() => handleBuyNow(item)}
-                    disabled={item.quantity < 1}
-                    className="inline-flex rounded-lg bg-[#ff7a1a] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#e7680d] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex rounded-lg bg-[#ff7a1a] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#e7680d]"
                   >
                     Buy Now
                   </button>

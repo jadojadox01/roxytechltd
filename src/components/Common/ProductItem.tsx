@@ -74,20 +74,12 @@ const ProductItem = ({ item, bgClr = "white" }: Props) => {
   };
 
   const handleAddToCart = () => {
-    if (item.quantity > 0) {
-      addItem(cartItem);
-      toast.success("Product added to cart!");
-    } else {
-      toast.error("This product is out of stock!");
-    }
+    addItem(cartItem);
+    toast.success("Product added to cart!");
   };
 
   const handleBuyNow = () => {
-    if (item.quantity > 0) {
-      buyNow(cartItem);
-    } else {
-      toast.error("This product is out of stock!");
-    }
+    buyNow(cartItem);
   };
 
   const handleItemToWishList = () => {
@@ -114,12 +106,6 @@ const ProductItem = ({ item, bgClr = "white" }: Props) => {
             {calculateDiscountPercentage(item.discountedPrice, item.price)}% OFF
           </span>
         ) : null}
-        {item.quantity < 1 && (
-          <span className="absolute right-2 top-2 z-10 rounded-full bg-red-500 px-2 py-1 text-xs font-medium text-white">
-            Out of Stock
-          </span>
-        )}
-
         <Link href={productHref} className="flex aspect-square items-center justify-center p-4">
           <Image
             src={productImage}
@@ -188,15 +174,13 @@ const ProductItem = ({ item, bgClr = "white" }: Props) => {
         <div className="mt-auto grid grid-cols-2 gap-2">
           <button
             onClick={handleAddToCart}
-            disabled={item.quantity < 1}
-            className="w-full rounded-full border border-[#1c2ea3] py-2.5 text-xs font-semibold text-[#1c2ea3] transition hover:bg-[#1c2ea3]/5 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+            className="w-full rounded-full border border-[#1c2ea3] py-2.5 text-xs font-semibold text-[#1c2ea3] transition hover:bg-[#1c2ea3]/5 sm:text-sm"
           >
-            {item.quantity > 0 ? "Add to Cart" : "Out of Stock"}
+            Add to Cart
           </button>
           <button
             onClick={handleBuyNow}
-            disabled={item.quantity < 1}
-            className="w-full rounded-full bg-[#ff7a1a] py-2.5 text-xs font-semibold text-white transition hover:bg-[#e7680d] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+            className="w-full rounded-full bg-[#ff7a1a] py-2.5 text-xs font-semibold text-white transition hover:bg-[#e7680d] sm:text-sm"
           >
             Buy Now
           </button>

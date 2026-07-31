@@ -46,7 +46,7 @@ const Footer = async () => {
               <img
                 src={headerSettings?.headerLogo || "/images/logo/logo.svg"}
                 alt={siteName}
-                className="h-10 w-auto object-contain"
+                className="h-20 w-auto max-w-[260px] object-contain sm:h-24 sm:max-w-[320px]"
               />
             </Link>
             <p className="mt-3 max-w-xs text-[13.5px] leading-7 text-white/65">

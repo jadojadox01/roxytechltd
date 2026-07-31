@@ -89,10 +89,10 @@ const MobileMenu = ({ isOpen, onClose, menuData, headerLogo, siteName, categorie
                 <Image
                   src={headerLogo || "/images/logo/logo.svg"}
                   alt={siteName || "Logo"}
-                  width={170}
-                  height={76}
+                  width={280}
+                  height={100}
                   priority
-                  className="h-14 w-auto object-contain"
+                  className="h-16 w-auto max-w-[200px] object-contain"
                 />
               </Link>
             </div>

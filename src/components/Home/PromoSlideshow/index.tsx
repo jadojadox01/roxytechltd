@@ -20,8 +20,8 @@ const PromoSlideshow = async () => {
     title: b.bannerName || b.product?.title || "Special Promotion",
     description:
       b.product?.title
-        ? `Save on ${b.product.title} — available now while stocks last.`
-        : "Exclusive offer — limited stock available.",
+        ? `Save on ${b.product.title} — order yours today.`
+        : "Exclusive offer — available to order now.",
     image: b.bannerImage,
     href: `/products/${b.product?.slug}`,
     cta: "View Offer",

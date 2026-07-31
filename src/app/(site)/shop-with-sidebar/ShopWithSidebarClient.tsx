@@ -39,7 +39,6 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
   const pathname = usePathname();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(null);
-  const [inStockOnly, setInStockOnly] = useState(false);
   const [sortBy, setSortBy] = useState<string>("latest");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -64,10 +63,6 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
       }
     }
 
-    if (inStockOnly) {
-      result = result.filter((p) => (p.quantity || 0) > 0);
-    }
-
     // Sort
     switch (sortBy) {
       case "price-asc":
@@ -87,7 +82,7 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
     }
 
     return result;
-  }, [products, selectedCategory, selectedPriceRange, sortBy, inStockOnly]);
+  }, [products, selectedCategory, selectedPriceRange, sortBy]);
 
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
   const paginatedProducts = filteredProducts.slice(
@@ -98,12 +93,11 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
   const handleClearFilters = () => {
     setSelectedCategory(null);
     setSelectedPriceRange(null);
-    setInStockOnly(false);
     setSortBy("latest");
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = selectedCategory || selectedPriceRange || inStockOnly;
+  const hasActiveFilters = selectedCategory || selectedPriceRange;
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -170,28 +164,6 @@ export default function ShopWithSidebarClient({ products, categories }: Props) {
                 </li>
               ))}
             </ul>
-          </div>
-
-          <div className="border-t border-slate-100" />
-
-          {/* Availability */}
-          <div>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-900">
-              Availability
-            </h3>
-            <button
-              onClick={() => {
-                setInStockOnly(!inStockOnly);
-                setCurrentPage(1);
-              }}
-              className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                inStockOnly
-                  ? "bg-[#eef2ff] font-semibold text-[#1c2ea3]"
-                  : "text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              In stock only
-            </button>
           </div>
 
           <div className="border-t border-slate-100" />

@@ -195,13 +195,6 @@ export default function ProductDetailClient({
                   -{discountPercent}%
                 </span>
               )}
-              {product.quantity === 0 && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white/80">
-                  <span className="rounded-full bg-slate-800 px-4 py-2 text-sm font-semibold text-white">
-                    Out of Stock
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* Thumbnails */}
@@ -274,24 +267,14 @@ export default function ProductDetailClient({
               </p>
             )}
 
-            {/* SKU & Stock */}
-            <div className="flex flex-wrap gap-4 text-sm text-slate-600">
-              {product.sku && (
+            {/* SKU */}
+            {product.sku && (
+              <div className="flex flex-wrap gap-4 text-sm text-slate-600">
                 <div>
                   <span className="font-medium text-slate-700">SKU:</span> {product.sku}
                 </div>
-              )}
-              <div>
-                <span className="font-medium text-slate-700">Availability:</span>{" "}
-                {product.quantity > 0 ? (
-                  <span className="text-green-600 font-medium">
-                    In Stock ({product.quantity} left)
-                  </span>
-                ) : (
-                  <span className="text-red-600 font-medium">Out of Stock</span>
-                )}
               </div>
-            </div>
+            )}
 
             {/* Custom Attributes */}
             {product.customAttributes?.map((attr) => (
@@ -311,43 +294,41 @@ export default function ProductDetailClient({
             ))}
 
             {/* Quantity + Add to Cart / Buy Now */}
-            {product.quantity > 0 && (
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="flex items-center rounded-lg border border-slate-300 overflow-hidden">
-                    <button
-                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="px-3 py-2.5 text-slate-600 hover:bg-slate-50 transition font-bold text-lg"
-                      aria-label="Decrease quantity"
-                    >
-                      −
-                    </button>
-                    <span className="min-w-[48px] text-center text-sm font-semibold text-slate-900 py-2.5 border-x border-slate-300">
-                      {quantity}
-                    </span>
-                    <button
-                      onClick={() => setQuantity((q) => Math.min(product.quantity, q + 1))}
-                      className="px-3 py-2.5 text-slate-600 hover:bg-slate-50 transition font-bold text-lg"
-                      aria-label="Increase quantity"
-                    >
-                      +
-                    </button>
-                  </div>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex items-center rounded-lg border border-slate-300 overflow-hidden">
                   <button
-                    onClick={handleAddToCart}
-                    className="flex-1 sm:flex-none rounded-lg border border-[#0071CE] bg-white px-6 py-2.5 text-sm font-semibold text-[#0071CE] transition hover:bg-[#0071CE]/5 sm:px-8"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    className="px-3 py-2.5 text-slate-600 hover:bg-slate-50 transition font-bold text-lg"
+                    aria-label="Decrease quantity"
                   >
-                    Add to Cart
+                    −
+                  </button>
+                  <span className="min-w-[48px] text-center text-sm font-semibold text-slate-900 py-2.5 border-x border-slate-300">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() => setQuantity((q) => q + 1)}
+                    className="px-3 py-2.5 text-slate-600 hover:bg-slate-50 transition font-bold text-lg"
+                    aria-label="Increase quantity"
+                  >
+                    +
                   </button>
                 </div>
                 <button
-                  onClick={handleBuyNow}
-                  className="w-full rounded-lg bg-[#02AAA4] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#028f86] sm:w-auto sm:px-8"
+                  onClick={handleAddToCart}
+                  className="flex-1 sm:flex-none rounded-lg border border-[#0071CE] bg-white px-6 py-2.5 text-sm font-semibold text-[#0071CE] transition hover:bg-[#0071CE]/5 sm:px-8"
                 >
-                  Buy Now
+                  Add to Cart
                 </button>
               </div>
-            )}
+              <button
+                onClick={handleBuyNow}
+                className="w-full rounded-lg bg-[#02AAA4] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#028f86] sm:w-auto sm:px-8"
+              >
+                Buy Now
+              </button>
+            </div>
 
             {/* Tags */}
             {product.tags?.length > 0 && (

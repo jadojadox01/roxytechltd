@@ -80,7 +80,7 @@ const ActionBtn = ({
             show ? "opacity-100 -translate-x-2" : "opacity-0 translate-x-0"
           }`}
         >
-          {isDisabled ? "Out of stock" : addedToWishlist ? "Added" : text}
+          {isDisabled ? "Unavailable" : addedToWishlist ? "Added" : text}
           <span className="absolute -right-1.5 top-2.5 w-0 h-0 border-[7px] border-solid border-transparent border-l-white"></span>
         </p>
       </div>

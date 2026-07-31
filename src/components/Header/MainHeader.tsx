@@ -159,16 +159,16 @@ const MainHeader = ({ headerData, siteName = "Shop", siteSettings, categories = 
                 <Image
                   src={headerData?.headerLogo || "/images/logo/logo.svg"}
                   alt={displaySiteName}
-                  width={520}
-                  height={140}
+                  width={640}
+                  height={180}
                   priority
-                  className="h-16 w-auto object-contain sm:h-20"
+                  className="h-20 w-auto max-w-[220px] object-contain sm:h-24 sm:max-w-[280px]"
                 />
               </Link>
 
               <SearchBar
                 placeholder={searchPlaceholder}
-                className="hidden min-w-0 flex-1 md:block lg:max-w-xl xl:max-w-2xl"
+                className="hidden min-w-0 flex-1 md:block md:max-w-xs lg:max-w-sm"
               />
 
               <div className="hidden lg:block">
@@ -265,7 +265,7 @@ const MainHeader = ({ headerData, siteName = "Shop", siteSettings, categories = 
             </div>
 
             <div className="pb-3 md:hidden">
-              <SearchBar placeholder={searchPlaceholder} />
+              <SearchBar placeholder={searchPlaceholder} className="mx-auto max-w-sm" />
             </div>
           </div>
         </div>

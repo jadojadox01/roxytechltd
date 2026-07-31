@@ -84,15 +84,6 @@ export async function POST(request: NextRequest) {
       }
 
       const quantity = Math.max(1, Math.floor(item.quantity || 1));
-      if (product.quantity < quantity) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: `${product.title} only has ${product.quantity} item(s) left in stock`,
-          },
-          { status: 400 }
-        );
-      }
 
       const unitPrice = product.discountedPrice
         ? Number(product.discountedPrice)
