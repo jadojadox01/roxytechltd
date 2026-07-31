@@ -48,7 +48,7 @@ export const getCategories = unstable_cache(
       return [];
     }
   },
-  ["categories"],
+  ["categories-v2"],
   { tags: ["categories"] }
 );
 

@@ -55,8 +55,10 @@ export async function productHasStatusColumn(): Promise<boolean> {
 
 export async function activeProductWhere(): Promise<Record<string, unknown>> {
   const hasStatus = await productHasStatusColumn();
-  if (hasStatus) return { status: "ACTIVE" };
-  return { quantity: { gt: 0 } };
+  // Hide only deliberately inactive products. OUT_OF_STOCK is internal —
+  // customers can still browse and order those items.
+  if (hasStatus) return { status: { not: "INACTIVE" } };
+  return {};
 }
 
 export async function hasActivityLogTable(): Promise<boolean> {
