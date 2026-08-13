@@ -28,7 +28,7 @@ const Footer = async () => {
 
   const supportLinks = [
     { label: "Help Centre", href: "/contact" },
-    { label: "Track Order", href: "/user/my-account" },
+    { label: "Track Order", href: "/track-order" },
     { label: "Returns", href: "/contact" },
     { label: "Shipping Info", href: "/contact" },
     { label: "Privacy Policy", href: "/privacy-policy" },

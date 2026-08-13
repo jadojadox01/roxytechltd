@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prismaClientInstance } from "@/lib/prismaDB";
 import { notifyOrderPlaced } from "@/lib/order-emails";
 import { markCouponUsed, validateAndComputeCoupon } from "@/lib/coupon";
+import { uploadImageFile } from "@/lib/upload-image";
 
 type CheckoutItem = {
   id: string;
@@ -12,6 +13,40 @@ type CheckoutItem = {
   quantity?: number;
   image?: string;
 };
+
+async function parseOrderBody(request: NextRequest): Promise<{
+  customer: Record<string, unknown>;
+  items: CheckoutItem[];
+  paymentMethod?: string;
+  couponCode?: string;
+  paymentEvidenceFile: File | null;
+}> {
+  const contentType = request.headers.get("content-type") || "";
+
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await request.formData();
+    const rawPayload = formData.get("payload");
+    const payload =
+      typeof rawPayload === "string" ? JSON.parse(rawPayload) : {};
+    const evidence = formData.get("paymentEvidence");
+    return {
+      customer: payload.customer || {},
+      items: Array.isArray(payload.items) ? payload.items : [],
+      paymentMethod: payload.paymentMethod,
+      couponCode: payload.couponCode,
+      paymentEvidenceFile: evidence instanceof File && evidence.size > 0 ? evidence : null,
+    };
+  }
+
+  const body = await request.json();
+  return {
+    customer: body?.customer || {},
+    items: Array.isArray(body?.items) ? body.items : [],
+    paymentMethod: body?.paymentMethod,
+    couponCode: body?.couponCode,
+    paymentEvidenceFile: null,
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,8 +68,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { customer, items, paymentMethod, couponCode } = body || {};
+    const { customer, items, paymentMethod, couponCode, paymentEvidenceFile } =
+      await parseOrderBody(request);
 
     if (
       !customer?.name ||
@@ -48,6 +83,37 @@ export async function POST(request: NextRequest) {
         { success: false, message: "Missing checkout details" },
         { status: 400 }
       );
+    }
+
+    const method = String(paymentMethod || "cod");
+    if ((method === "momo" || method === "cards") && !paymentEvidenceFile) {
+      return NextResponse.json(
+        { success: false, message: "Payment evidence is required for this payment method" },
+        { status: 400 }
+      );
+    }
+
+    let paymentEvidenceUrl: string | null = null;
+    if (paymentEvidenceFile) {
+      try {
+        paymentEvidenceUrl = await uploadImageFile(
+          paymentEvidenceFile,
+          "payments",
+          "evidence"
+        );
+      } catch (uploadError) {
+        console.error("[orders] payment evidence upload failed", uploadError);
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              uploadError instanceof Error
+                ? uploadError.message
+                : "Failed to upload payment evidence",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     const productIds = items.map((item: CheckoutItem) => item.id).filter(Boolean);
@@ -118,8 +184,17 @@ export async function POST(request: NextRequest) {
     const discountAmount = coupon?.discountAmount || 0;
     const finalTotal = Math.max(0, computedTotal - discountAmount);
     const paymentLabel = coupon
-      ? `${paymentMethod || "cod"}|coupon:${coupon.code}|discount:${discountAmount}`
-      : paymentMethod || "cod";
+      ? `${method}|coupon:${coupon.code}|discount:${discountAmount}`
+      : method;
+
+    // Ensure column exists on older DBs without requiring a separate migration step.
+    try {
+      await prismaClientInstance.$executeRawUnsafe(
+        `ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "paymentEvidence" TEXT`
+      );
+    } catch {
+      // ignore — column may already exist or DB may not support IF NOT EXISTS
+    }
 
     const order = await prismaClientInstance.order.create({
       data: {
@@ -130,6 +205,7 @@ export async function POST(request: NextRequest) {
         shippingAddress: String(customer.address).trim(),
         totalPrice: finalTotal,
         paymentMethod: paymentLabel,
+        paymentEvidence: paymentEvidenceUrl,
         status: "PENDING",
         items: {
           create: orderItems,

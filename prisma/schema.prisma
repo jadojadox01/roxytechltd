@@ -99,6 +99,7 @@ model Order {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   paymentMethod   String      @default("cod")
+  paymentEvidence String?
   user            User        @relation(fields: [userId], references: [id])
   items           OrderItem[]
   payments        Payment[]

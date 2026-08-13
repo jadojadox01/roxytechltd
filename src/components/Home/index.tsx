@@ -9,7 +9,6 @@ import Newsletter from "@/components/Common/Newsletter";
 import ProductItem from "@/components/Common/ProductItem";
 import HomeHeroSlideshow from "@/components/Home/HomeHeroSlideshow";
 import CategoryGrid from "@/components/Home/Categories/CategoryGrid";
-import { prisma } from "@/lib/prismaDB";
 import {
   DEFAULT_HERO_SUBTITLE,
   DEFAULT_HERO_TITLE,
@@ -28,21 +27,13 @@ function splitHeroTitle(title: string) {
 }
 
 const Home = async () => {
-  const [
-    siteSettings,
-    featuredProducts,
-    newArrivalProducts,
-    productCount,
-    customerCount,
-    heroSliders,
-  ] = await Promise.all([
-    getSiteSettings(),
-    getFeaturedProducts(),
-    getNewArrivalsProduct(),
-    prisma.product.count().catch(() => 0),
-    prisma.user.count({ where: { role: "USER" } }).catch(() => 0),
-    getHeroSliders().catch(() => []),
-  ]);
+  const [siteSettings, featuredProducts, newArrivalProducts, heroSliders] =
+    await Promise.all([
+      getSiteSettings(),
+      getFeaturedProducts(),
+      getNewArrivalsProduct(),
+      getHeroSliders().catch(() => []),
+    ]);
 
   const heroTitle = siteSettings?.heroTitle?.trim() || DEFAULT_HERO_TITLE;
   const { lead: heroLead, accent: heroAccent } = splitHeroTitle(heroTitle);
@@ -94,20 +85,6 @@ const Home = async () => {
               >
                 Learn More
               </Link>
-            </div>
-            <div className="mt-10 grid grid-cols-3 gap-6 text-left sm:max-w-lg">
-              <div>
-                <div className="text-3xl font-black text-white">{productCount.toLocaleString("en-US")}+</div>
-                <div className="text-sm text-white/80">Products</div>
-              </div>
-              <div>
-                <div className="text-3xl font-black text-white">{customerCount.toLocaleString("en-US")}+</div>
-                <div className="text-sm text-white/80">Happy customers</div>
-              </div>
-              <div>
-                <div className="text-3xl font-black text-white">24h</div>
-                <div className="text-sm text-white/80">Kigali delivery</div>
-              </div>
             </div>
           </div>
 

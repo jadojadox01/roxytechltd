@@ -15,6 +15,7 @@ const CartPageContent = () => {
     removeItem,
     incrementItem,
     decrementItem,
+    updateItemQuantity,
     clearCart,
     goToCheckout,
   } = useCart();
@@ -130,9 +131,20 @@ const CartPageContent = () => {
                 >
                   -
                 </button>
-                <span className="min-w-8 text-center text-sm font-semibold text-slate-900">
-                  {item.quantity}
-                </span>
+                <input
+                  type="number"
+                  min={1}
+                  inputMode="numeric"
+                  value={item.quantity}
+                  onChange={(e) => updateItemQuantity(item.id, Number(e.target.value))}
+                  onBlur={(e) => {
+                    if (!e.target.value || Number(e.target.value) < 1) {
+                      updateItemQuantity(item.id, 1);
+                    }
+                  }}
+                  className="h-8 w-16 rounded-lg border border-slate-300 bg-white text-center text-sm font-semibold text-slate-900 outline-none focus:border-[#1c2ea3]"
+                  aria-label="Quantity"
+                />
                 <button
                   onClick={() => incrementItem(item.id)}
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-lg text-slate-700 transition hover:border-[#1c2ea3] hover:text-[#1c2ea3]"

@@ -6,6 +6,7 @@ import {
     removeItemFromCart,
     incrementItem,
     decrementItem,
+    updateCartItemQuantity,
     clearCart,
     toggleCartModal,
     selectCartCount,
@@ -47,6 +48,11 @@ export const useCart = () => {
         dispatch(decrementItem(id));
     };
 
+    const updateItemQuantity = (id: string | number, quantity: number) => {
+        const next = Math.max(1, Math.floor(Number(quantity) || 1));
+        dispatch(updateCartItemQuantity({ id, quantity: next }));
+    };
+
     const clearAllItems = () => {
         dispatch(clearCart());
         clearCartStorage();
@@ -83,6 +89,7 @@ export const useCart = () => {
         removeItem,
         incrementItem: incrementItemQuantity,
         decrementItem: decrementItemQuantity,
+        updateItemQuantity,
         clearCart: clearAllItems,
         handleCartClick,
         buyNow,

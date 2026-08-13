@@ -19,6 +19,8 @@ type Order = {
   shippingPhone: string;
   shippingAddress: string;
   totalPrice: number;
+  paymentMethod?: string;
+  paymentEvidence?: string | null;
   status: "PENDING" | "CONFIRMED" | "PREPARING" | "READY_FOR_DELIVERY" | "COMPLETED" | "REJECTED";
   createdAt: string;
   items: OrderItem[];
@@ -271,6 +273,23 @@ export default function AdminOrdersClient() {
                       <p className="break-words"><span className="font-medium">Email:</span> {order.shippingEmail}</p>
                       <p className="break-words"><span className="font-medium">Phone:</span> {order.shippingPhone}</p>
                       <p className="break-words"><span className="font-medium">Address:</span> {order.shippingAddress}</p>
+                      <p className="break-words">
+                        <span className="font-medium">Payment:</span>{" "}
+                        {String(order.paymentMethod || "cod").split("|")[0]}
+                      </p>
+                      {order.paymentEvidence ? (
+                        <p className="break-words">
+                          <span className="font-medium">Evidence:</span>{" "}
+                          <a
+                            href={order.paymentEvidence}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-semibold text-[#1c2ea3] hover:underline"
+                          >
+                            View payment proof
+                          </a>
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                   <div>

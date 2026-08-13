@@ -126,6 +126,7 @@ const MainHeader = ({ headerData, siteName = "Shop", siteSettings, categories = 
           : [{ title: "Browse shop", path: "/shop-with-sidebar" }],
     },
     { title: "About", path: "/about" },
+    { title: "Track Order", path: "/track-order" },
     { title: "Contact", path: "/contact" },
   ];
 

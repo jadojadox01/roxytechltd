@@ -30,7 +30,8 @@ type Props = {
 };
 
 const CheckoutForm = ({ user, paymentSettings }: Props) => {
-  const { cartDetails, totalPrice, clearCart } = useCart();
+  const { cartDetails, totalPrice, clearCart, updateItemQuantity, incrementItem, decrementItem } =
+    useCart();
   const router = useRouter();
   const [form, setForm] = useState({
     name: user?.name || "",
@@ -50,6 +51,8 @@ const CheckoutForm = ({ user, paymentSettings }: Props) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState("");
+  const [paymentEvidence, setPaymentEvidence] = useState<File | null>(null);
+  const [evidencePreview, setEvidencePreview] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -63,8 +66,19 @@ const CheckoutForm = ({ user, paymentSettings }: Props) => {
     }
   }, []);
 
+  useEffect(() => {
+    if (!paymentEvidence) {
+      setEvidencePreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(paymentEvidence);
+    setEvidencePreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [paymentEvidence]);
+
   const items = Object.values(cartDetails ?? {});
   const bankCardsMessage = paymentSettings.bankCardsMessage?.trim() || "Coming soon";
+  const needsPaymentEvidence = paymentMethod === "momo" || paymentMethod === "cards";
 
   const paymentLabels: Record<PaymentMethod, string> = {
     momo: "MTN Mobile Money",
@@ -84,14 +98,19 @@ const CheckoutForm = ({ user, paymentSettings }: Props) => {
       return;
     }
 
+    if (needsPaymentEvidence && !paymentEvidence) {
+      setMessage("Please upload payment evidence before placing your order.");
+      return;
+    }
+
     setLoading(true);
     setMessage(null);
 
     try {
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const formData = new FormData();
+      formData.append(
+        "payload",
+        JSON.stringify({
           customer: {
             userId: user?.id,
             name: form.name,
@@ -103,7 +122,15 @@ const CheckoutForm = ({ user, paymentSettings }: Props) => {
           totalPrice,
           paymentMethod,
           couponCode: couponCode || undefined,
-        }),
+        })
+      );
+      if (paymentEvidence) {
+        formData.append("paymentEvidence", paymentEvidence);
+      }
+
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        body: formData,
       });
 
       const result = await response.json();
@@ -118,7 +145,7 @@ const CheckoutForm = ({ user, paymentSettings }: Props) => {
         // ignore
       }
       setMessage("Order placed successfully. Thank you!");
-      router.push("/cart");
+      router.push("/track-order");
     } catch (error: unknown) {
       setMessage(error instanceof Error ? error.message : "Something went wrong.");
     } finally {
@@ -293,6 +320,37 @@ const CheckoutForm = ({ user, paymentSettings }: Props) => {
               </p>
             </div>
           )}
+
+          {needsPaymentEvidence && (
+            <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <label className="block text-sm font-semibold text-slate-900">
+                Payment evidence <span className="text-red-500">*</span>
+              </label>
+              <p className="mt-1 text-xs text-slate-500">
+                Upload a screenshot or photo of your payment confirmation before placing the order.
+              </p>
+              <input
+                type="file"
+                accept="image/*"
+                required={needsPaymentEvidence}
+                onChange={(e) => setPaymentEvidence(e.target.files?.[0] || null)}
+                className="mt-3 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-[#1c2ea3] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#16257e]"
+              />
+              {evidencePreview && paymentEvidence?.type.startsWith("image/") && (
+                <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={evidencePreview}
+                    alt="Payment evidence preview"
+                    className="max-h-48 w-full object-contain"
+                  />
+                </div>
+              )}
+              {paymentEvidence && !paymentEvidence.type.startsWith("image/") && (
+                <p className="mt-2 text-xs font-medium text-slate-600">{paymentEvidence.name}</p>
+              )}
+            </div>
+          )}
         </div>
 
         {message ? (
@@ -312,16 +370,50 @@ const CheckoutForm = ({ user, paymentSettings }: Props) => {
 
       <aside className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-slate-900">Your order</h2>
-        <div className="mt-5 space-y-3 text-sm text-slate-600">
+        <div className="mt-5 space-y-4 text-sm text-slate-600">
           {items.length === 0 ? (
             <p>Your cart is empty.</p>
           ) : (
             items.map((item) => (
-              <div key={item.id} className="flex items-center justify-between gap-3">
-                <span>
-                  {item.name} × {item.quantity}
-                </span>
-                <span>{formatPrice(item.price * item.quantity)}</span>
+              <div key={item.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="font-medium text-slate-900">{item.name}</span>
+                  <span className="shrink-0 font-semibold text-slate-900">
+                    {formatPrice(item.price * item.quantity)}
+                  </span>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => decrementItem(item.id)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700"
+                    aria-label="Decrease quantity"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    inputMode="numeric"
+                    value={item.quantity}
+                    onChange={(e) => updateItemQuantity(item.id, Number(e.target.value))}
+                    onBlur={(e) => {
+                      if (!e.target.value || Number(e.target.value) < 1) {
+                        updateItemQuantity(item.id, 1);
+                      }
+                    }}
+                    className="h-8 w-16 rounded-lg border border-slate-300 bg-white text-center text-sm font-semibold text-slate-900 outline-none focus:border-[#02AAA4]"
+                    aria-label={`Quantity for ${item.name}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => incrementItem(item.id)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700"
+                    aria-label="Increase quantity"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
             ))
           )}

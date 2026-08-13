@@ -304,9 +304,18 @@ export default function ProductDetailClient({
                   >
                     −
                   </button>
-                  <span className="min-w-[48px] text-center text-sm font-semibold text-slate-900 py-2.5 border-x border-slate-300">
-                    {quantity}
-                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    inputMode="numeric"
+                    value={quantity}
+                    onChange={(e) => {
+                      const next = Math.floor(Number(e.target.value));
+                      setQuantity(Number.isFinite(next) && next > 0 ? next : 1);
+                    }}
+                    className="min-w-[64px] max-w-[80px] border-x border-slate-300 bg-white py-2.5 text-center text-sm font-semibold text-slate-900 outline-none"
+                    aria-label="Quantity"
+                  />
                   <button
                     onClick={() => setQuantity((q) => q + 1)}
                     className="px-3 py-2.5 text-slate-600 hover:bg-slate-50 transition font-bold text-lg"

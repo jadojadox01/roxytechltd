@@ -87,7 +87,6 @@ export default async function AboutPage() {
         {(phone || email || address) && (
           <section className="mt-8 rounded-3xl border border-[#e8ecff] bg-gradient-to-r from-[#1a255f] to-[#24337f] p-6 text-white shadow-sm sm:p-8">
             <h2 className="text-2xl font-black">Get in touch</h2>
-            <p className="mt-2 text-sm text-white/80">Reach us anytime — we&apos;re happy to help.</p>
             <ul className="mt-6 grid gap-4 sm:grid-cols-3">
               {address && (
                 <li className="rounded-2xl border border-white/15 bg-white/10 p-4">
