@@ -3,6 +3,7 @@ import { getSiteSettings } from "@/get-api-data/site-settings";
 import { getHeaderSettings } from "@/get-api-data/header-setting";
 import { getCategories } from "@/get-api-data/category";
 import { getSiteName } from "@/get-api-data/seo-setting";
+import FooterSupportLinks from "./FooterSupportLinks";
 
 const Footer = async () => {
   const [siteSettings, headerSettings, categories, siteName] = await Promise.all([
@@ -108,18 +109,7 @@ const Footer = async () => {
             <h4 className="mb-3.5 text-[13.5px] font-bold tracking-wide text-white">
               Support
             </h4>
-            <ul className="space-y-2">
-              {supportLinks.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-[13px] text-white/60 transition hover:text-[#ff7a20]"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <FooterSupportLinks links={supportLinks} />
           </div>
         </div>
 

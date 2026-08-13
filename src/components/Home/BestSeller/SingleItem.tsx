@@ -103,14 +103,14 @@ const SingleItem = ({ item }: { item: Product }) => {
         ) : null}
         <Link
           href={`/products/${item?.slug}`}
-          className="flex aspect-square items-center justify-center p-4"
+          className="relative block aspect-square overflow-hidden"
         >
           <Image
             src={productImage}
             alt={item.title || "product-image"}
-            width={260}
-            height={260}
-            className="max-h-[220px] w-auto object-contain transition duration-300 group-hover:scale-105"
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover transition duration-300 group-hover:scale-105"
           />
         </Link>
 

@@ -126,7 +126,7 @@ const MainHeader = ({ headerData, siteName = "Shop", siteSettings, categories = 
           : [{ title: "Browse shop", path: "/shop-with-sidebar" }],
     },
     { title: "About", path: "/about" },
-    { title: "Track Order", path: "/track-order" },
+    ...(isLoggedIn ? [{ title: "Track Order", path: "/track-order" }] : []),
     { title: "Contact", path: "/contact" },
   ];
 
@@ -195,6 +195,13 @@ const MainHeader = ({ headerData, siteName = "Shop", siteSettings, categories = 
                           onClick={() => setUserMenuOpen(false)}
                         >
                           My Account
+                        </Link>
+                        <Link
+                          href="/track-order"
+                          className="block px-4 py-2 text-sm text-dark-2 hover:bg-gray-1 hover:text-blue"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          Track Order
                         </Link>
                         <Link
                           href="/wishlist"
