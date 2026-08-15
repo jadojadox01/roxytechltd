@@ -1,13 +1,13 @@
-import { getAllProducts } from "@/get-api-data/product";
-import ProductItem from "@/components/Common/ProductItem";
-import Link from "next/link";
 import { createPageMetadata } from "@/lib/metadata";
+import { getCatalogPage } from "@/lib/catalog";
+import ShopWithoutSidebarClient from "./ShopWithoutSidebarClient";
+import type { Product } from "@/types/product";
 
 export async function generateMetadata() {
   return createPageMetadata("Shop", "Browse all our products.");
 }
 
-type SortOption = "newest" | "oldest" | "popular";
+export const dynamic = "force-dynamic";
 
 type Props = {
   searchParams: Promise<{ sort?: string; q?: string }>;
@@ -15,123 +15,23 @@ type Props = {
 
 export default async function ShopWithoutSidebarPage({ searchParams }: Props) {
   const { sort = "newest", q = "" } = await searchParams;
+  const apiSort =
+    sort === "popular" ? "popular" : sort === "oldest" ? "oldest" : "latest";
 
-  const orderBy =
-    sort === "popular"
-      ? { reviews: { _count: "desc" as const } }
-      : sort === "oldest"
-      ? { updatedAt: "asc" as const }
-      : { updatedAt: "desc" as const };
-
-  const allProducts = await getAllProducts(orderBy);
-
-  // Client-side search filter (runs server-side here since we have all products)
-  const products = q
-    ? allProducts.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q.toLowerCase()) ||
-          (p.shortDescription ?? "").toLowerCase().includes(q.toLowerCase())
-      )
-    : allProducts;
-
-  const sortOptions: { value: SortOption; label: string }[] = [
-    { value: "newest", label: "Newest" },
-    { value: "popular", label: "Most Popular" },
-    { value: "oldest", label: "Oldest" },
-  ];
+  const catalog = await getCatalogPage({
+    page: 1,
+    limit: 15,
+    sort: apiSort,
+    q: q || undefined,
+  });
 
   return (
-    <main className="min-h-[80vh] bg-slate-50 py-10 sm:py-14">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 xl:px-0">
-        <div className="mb-8 overflow-hidden rounded-3xl border border-[#e0e7ff] bg-gradient-to-r from-[#1a255f] to-[#24337f] p-6 text-white shadow-sm sm:p-8">
-          <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide text-white/90">
-            Catalog view
-          </p>
-          <h1 className="mt-4 text-2xl font-black sm:text-3xl">All Products</h1>
-          <p className="mt-2 text-sm text-white/85">
-            {products.length} product{products.length !== 1 ? "s" : ""} found
-            {q ? ` for "${q}"` : ""}
-          </p>
-        </div>
-
-        {/* Header row */}
-        <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-[#e8ecff] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 sm:text-xl">Search and sort</h2>
-            <p className="mt-1 text-sm text-slate-500">Use filters to quickly find items.</p>
-          </div>
-
-          {/* Sort + Search */}
-          <form method="get" className="flex flex-wrap items-center gap-3">
-            {/* Search */}
-            <div className="relative">
-              <input
-                name="q"
-                defaultValue={q}
-                placeholder="Search products..."
-                className="h-10 w-56 rounded-lg border border-[#eadbcf] bg-[#fcf7f2] pl-9 pr-4 text-sm outline-none focus:border-[#ff7a1a] focus:ring-2 focus:ring-[#ff7a1a]/20"
-              />
-              <svg
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#5b78b9]"
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-
-            {/* Sort */}
-            <select
-              name="sort"
-              defaultValue={sort}
-              className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#1c2ea3]"
-            >
-              {sortOptions.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-
-            <button
-              type="submit"
-              className="h-10 rounded-lg bg-[#ff7a1a] px-4 text-sm font-semibold text-white transition hover:bg-[#e7680d]"
-            >
-              Apply
-            </button>
-
-            {(q || sort !== "newest") && (
-              <Link
-                href="/shop-without-sidebar"
-                className="h-10 inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-[#1c2ea3] hover:text-[#1c2ea3]"
-              >
-                Clear
-              </Link>
-            )}
-          </form>
-        </div>
-
-        {/* Product Grid */}
-        {products.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 sm:gap-6">
-            {products.map((product) => (
-              <ProductItem key={product.id} item={product as any} />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white py-20 text-center">
-            <svg className="mb-4 h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <h3 className="text-lg font-semibold text-slate-700">No products found</h3>
-            <p className="mt-1 text-sm text-slate-500">
-              {q ? `Try a different search term` : "No products have been added yet"}
-            </p>
-            {q && (
-              <Link href="/shop-without-sidebar" className="mt-4 text-sm font-semibold text-[#1c2ea3] hover:underline">
-                Clear search
-              </Link>
-            )}
-          </div>
-        )}
-      </div>
-    </main>
+    <ShopWithoutSidebarClient
+      initialProducts={JSON.parse(JSON.stringify(catalog.products)) as Product[]}
+      initialHasMore={catalog.hasMore}
+      initialTotal={catalog.total}
+      initialSort={sort}
+      initialQuery={q}
+    />
   );
 }

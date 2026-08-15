@@ -1,8 +1,8 @@
 import { createPageMetadata } from "@/lib/metadata";
-import type { Metadata } from "next";
-import { getAllProducts } from "@/get-api-data/product";
 import { getCategories } from "@/get-api-data/category";
+import { getCatalogPage } from "@/lib/catalog";
 import ShopWithSidebarClient from "./ShopWithSidebarClient";
+import type { Product } from "@/types/product";
 
 export async function generateMetadata() {
   return createPageMetadata("Shop");
@@ -11,8 +11,8 @@ export async function generateMetadata() {
 export const dynamic = "force-dynamic";
 
 export default async function ShopWithSidebarPage() {
-  const [products, categories] = await Promise.all([
-    getAllProducts(),
+  const [catalog, categories] = await Promise.all([
+    getCatalogPage({ page: 1, limit: 12, sort: "latest" }),
     getCategories(),
   ]);
 
@@ -25,12 +25,14 @@ export default async function ShopWithSidebarPage() {
           </p>
           <h1 className="mt-4 text-3xl font-black sm:text-4xl">Shop Products</h1>
           <p className="mt-2 text-sm text-white/85">
-            Browse products using categories and filters.
+            Browse products using categories and filters. Scroll to load more.
           </p>
         </div>
 
         <ShopWithSidebarClient
-          products={JSON.parse(JSON.stringify(products))}
+          initialProducts={JSON.parse(JSON.stringify(catalog.products)) as Product[]}
+          initialHasMore={catalog.hasMore}
+          initialTotal={catalog.total}
           categories={JSON.parse(JSON.stringify(categories))}
         />
       </div>

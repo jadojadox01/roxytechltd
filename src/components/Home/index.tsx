@@ -1,18 +1,17 @@
 import Link from "next/link";
-import {
-  getFeaturedProducts,
-  getNewArrivalsProduct,
-} from "@/get-api-data/product";
+import { getNewArrivalsProduct } from "@/get-api-data/product";
 import { getSiteSettings } from "@/get-api-data/site-settings";
 import { getHeroSliders } from "@/get-api-data/hero";
 import Newsletter from "@/components/Common/Newsletter";
 import ProductItem from "@/components/Common/ProductItem";
 import HomeHeroSlideshow from "@/components/Home/HomeHeroSlideshow";
 import CategoryGrid from "@/components/Home/Categories/CategoryGrid";
+import HomeFeaturedProducts from "@/components/Home/HomeFeaturedProducts";
 import {
   DEFAULT_HERO_SUBTITLE,
   DEFAULT_HERO_TITLE,
 } from "@/lib/site-settings-db";
+import { getCatalogPage } from "@/lib/catalog";
 import type { Product } from "@/types/product";
 
 function splitHeroTitle(title: string) {
@@ -27,10 +26,10 @@ function splitHeroTitle(title: string) {
 }
 
 const Home = async () => {
-  const [siteSettings, featuredProducts, newArrivalProducts, heroSliders] =
+  const [siteSettings, catalog, newArrivalProducts, heroSliders] =
     await Promise.all([
       getSiteSettings(),
-      getFeaturedProducts(),
+      getCatalogPage({ page: 1, limit: 12, sort: "latest" }),
       getNewArrivalsProduct(),
       getHeroSliders().catch(() => []),
     ]);
@@ -74,7 +73,7 @@ const Home = async () => {
             <p className="mt-4 max-w-xl text-sm leading-7 text-white/90 md:text-base">{heroSubtitle}</p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
-                href="/shop-without-sidebar"
+                href="#products"
                 className="inline-flex items-center rounded-lg bg-[#ff7a1a] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#e7680d]"
               >
                 Shop Now
@@ -94,41 +93,18 @@ const Home = async () => {
 
       <CategoryGrid />
 
-      <section className="mx-auto mt-12 w-full max-w-7xl px-4 sm:px-8 xl:px-0" id="products">
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-black text-slate-900 md:text-3xl">
-            Featured <span className="text-[#ff7a1a]">Products</span>
-          </h2>
-          <Link href="/shop-with-sidebar" className="text-sm font-bold text-[#1c2ea3] hover:underline">
-            See all products
-          </Link>
-        </div>
-
-        {featuredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {featuredProducts.map((item) => (
-              <ProductItem key={item.id} item={item as Product} />
-            ))}
-          </div>
-        ) : (
-          <p className="rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center text-sm text-slate-500">
-            No products yet. Add products in Admin → Products.
-          </p>
-        )}
-      </section>
+      <HomeFeaturedProducts
+        initialProducts={catalog.products as Product[]}
+        initialHasMore={catalog.hasMore}
+        initialTotal={catalog.total}
+      />
 
       {newArrivalProducts.length > 0 ? (
         <section className="mx-auto mt-14 w-full max-w-7xl px-4 sm:px-8 xl:px-0" id="new-arrivals">
-          <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="mb-6">
             <h2 className="text-2xl font-black text-slate-900 md:text-3xl">
               New <span className="text-[#ff7a1a]">Arrivals</span>
             </h2>
-            <Link
-              href="/shop-without-sidebar"
-              className="text-sm font-bold text-[#1c2ea3] hover:underline"
-            >
-              See all products
-            </Link>
           </div>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {newArrivalProducts.map((item) => (
