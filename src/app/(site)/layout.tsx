@@ -49,10 +49,10 @@ export default async function SiteLayout({
           <Breadcrumb />
           <Toaster position="top-center" reverseOrder={false} />
           {children}
+          <Footer />
         </Providers>
 
         <ScrollToTop />
-        <Footer />
       </>
     </div>
   );

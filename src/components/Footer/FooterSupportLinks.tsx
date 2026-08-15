@@ -6,7 +6,8 @@ import { useSession } from "next-auth/react";
 type SupportLink = { label: string; href: string };
 
 export default function FooterSupportLinks({ links }: { links: SupportLink[] }) {
-  const { status } = useSession();
+  const session = useSession();
+  const status = session?.status ?? "unauthenticated";
   const isLoggedIn = status === "authenticated";
   const visible = links.filter(
     (link) => link.href !== "/track-order" || isLoggedIn

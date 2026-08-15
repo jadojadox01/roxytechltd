@@ -47,7 +47,9 @@ type IProps = {
 };
 
 const MainHeader = ({ headerData, siteName = "Shop", siteSettings, categories = [] }: IProps) => {
-  const { data: session, status } = useSession();
+  const sessionState = useSession();
+  const session = sessionState?.data;
+  const status = sessionState?.status ?? "loading";
   const [navigationOpen, setNavigationOpen] = useState(false);
   const [stickyMenu, setStickyMenu] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
