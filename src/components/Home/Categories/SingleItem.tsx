@@ -28,7 +28,6 @@ const SingleItem = ({ item }: { item: Category }) => {
       <h3 className="line-clamp-1 text-center text-sm font-semibold text-dark transition group-hover:text-teal">
         {item.title}
       </h3>
-      <span className="mt-0.5 text-xs text-dark-4">{item.productCount || 0} items</span>
     </Link>
   );
 };

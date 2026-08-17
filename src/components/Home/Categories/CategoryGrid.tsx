@@ -50,9 +50,6 @@ const CategoryGrid = async () => {
                 <h3 className="line-clamp-1 text-sm font-semibold text-slate-900 transition group-hover:text-white sm:text-base">
                   {category.title}
                 </h3>
-                <span className="mt-1 text-xs text-slate-500 transition group-hover:text-white/80">
-                  {category.productCount || 0} products
-                </span>
               </div>
               <div className="absolute bottom-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[#ff7a1a] text-white opacity-0 transition duration-300 group-hover:opacity-100">
                 <ArrowRightIcon className="h-4 w-4" />

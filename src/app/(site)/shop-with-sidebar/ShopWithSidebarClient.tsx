@@ -188,7 +188,7 @@ export default function ShopWithSidebarClient({
           pageSize={12}
           query={query}
           wrapItem
-          gridClassName="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"
+          gridClassName="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3"
           onTotalChange={setTotal}
           emptyTitle="No products found"
           emptyDescription="Try adjusting your filters to find what you're looking for."
