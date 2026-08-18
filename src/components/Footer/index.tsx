@@ -3,7 +3,16 @@ import { getSiteSettings } from "@/get-api-data/site-settings";
 import { getHeaderSettings } from "@/get-api-data/header-setting";
 import { getCategories } from "@/get-api-data/category";
 import { getSiteName } from "@/get-api-data/seo-setting";
-import FooterSupportLinks from "./FooterSupportLinks";
+function excerptAbout(text: string, max = 160) {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return { preview: clean, truncated: false };
+  const cut = clean.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return {
+    preview: `${cut.slice(0, lastSpace > 80 ? lastSpace : max).trim()}...`,
+    truncated: true,
+  };
+}
 
 const Footer = async () => {
   const [siteSettings, headerSettings, categories, siteName] = await Promise.all([
@@ -15,9 +24,10 @@ const Footer = async () => {
 
   const year = new Date().getFullYear();
   const productLinks = (categories ?? []).slice(0, 5);
-  const brandText =
+  const fullAbout =
     siteSettings?.about?.trim() ||
     "Rwanda's trusted shop for stationery, school supplies, and electronics. Fast delivery, MTN MoMo accepted, quality guaranteed.";
+  const { preview: brandText, truncated: aboutTruncated } = excerptAbout(fullAbout);
 
   const companyLinks = [
     { label: "About Us", href: "/about" },
@@ -57,6 +67,14 @@ const Footer = async () => {
             <p className="mt-3 max-w-xs text-[13.5px] leading-7 text-white/65">
               {brandText}
             </p>
+            {aboutTruncated ? (
+              <Link
+                href="/about"
+                className="mt-2 inline-flex text-[13px] font-semibold text-[#ff7a20] transition hover:text-white"
+              >
+                Read more...
+              </Link>
+            ) : null}
           </div>
 
           {/* Products — live categories */}

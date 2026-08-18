@@ -53,7 +53,9 @@ export default async function AboutPage() {
             <h2 className="text-2xl font-black text-slate-900">
               Our <span className="text-[#ff7a1a]">Story</span>
             </h2>
-            <p className="mt-4 text-sm leading-7 text-slate-600 md:text-base">{about}</p>
+            <p className="mt-4 whitespace-pre-line text-sm leading-7 text-slate-600 md:text-base">
+              {about}
+            </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/shop-with-sidebar"
