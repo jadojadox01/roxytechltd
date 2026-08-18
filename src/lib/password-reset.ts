@@ -14,11 +14,21 @@ export function createRawResetToken() {
 }
 
 export function getAppBaseUrl() {
-  return (
-    process.env.NEXTAUTH_URL?.replace(/\/$/, "") ||
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    "https://naalvastore.vercel.app"
-  );
+  const fromEnv = (
+    process.env.NEXTAUTH_URL ||
+    process.env.AUTH_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    ""
+  ).replace(/\/$/, "");
+  if (fromEnv && !fromEnv.includes("roxytechltd.com")) {
+    return fromEnv;
+  }
+  const vercelHost =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL || "";
+  if (vercelHost) {
+    return `https://${vercelHost.replace(/^https?:\/\//, "")}`;
+  }
+  return "https://www.roxin.rw";
 }
 
 function storeName() {

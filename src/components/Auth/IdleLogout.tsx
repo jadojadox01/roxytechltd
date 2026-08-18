@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { signOutOnThisSite } from "@/lib/sign-out";
 
-const IDLE_MS = 2 * 60 * 1000; // 2 minutes
+const IDLE_MS = 30 * 60 * 1000; // 30 minutes
 
 const ACTIVITY_EVENTS: (keyof WindowEventMap)[] = [
   "mousemove",
@@ -16,7 +17,7 @@ const ACTIVITY_EVENTS: (keyof WindowEventMap)[] = [
 ];
 
 /**
- * Signs the user out immediately after 2 minutes with no interaction.
+ * Signs the user out after 30 minutes with no interaction.
  */
 export default function IdleLogout() {
   const { status } = useSession();
@@ -37,7 +38,7 @@ export default function IdleLogout() {
       if (signingOutRef.current) return;
       signingOutRef.current = true;
       clearTimer();
-      void signOut({ callbackUrl: "/signin?reason=idle" });
+      void signOutOnThisSite("/signin?reason=idle");
     };
 
     const resetTimer = () => {

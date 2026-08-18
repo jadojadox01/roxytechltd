@@ -1,6 +1,6 @@
 "use client";
 
-import { signOut } from "next-auth/react";
+import { signOutOnThisSite } from "@/lib/sign-out";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -100,7 +100,7 @@ export default function AdminSidebar({ siteName: siteNameProp }: { siteName?: st
 
         <div className="mt-8 border-t border-white/10 pt-4">
           <button
-            onClick={() => signOut({ callbackUrl: "/signin" })}
+            onClick={() => void signOutOnThisSite("/signin")}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-500/90 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600"
           >
             Sign out

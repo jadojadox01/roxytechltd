@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
-import { signOut } from "next-auth/react";
+import { signOutOnThisSite } from "@/lib/sign-out";
 import Link from "next/link";
 
 type User = {
@@ -195,7 +195,7 @@ export default function SystemUsersConsole() {
               Admin dashboard
             </Link>
             <button
-              onClick={() => signOut({ callbackUrl: "/signin" })}
+              onClick={() => void signOutOnThisSite("/signin")}
               className="rounded-lg bg-red-600/90 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-600"
             >
               Sign out

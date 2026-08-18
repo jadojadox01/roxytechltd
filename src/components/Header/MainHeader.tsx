@@ -15,7 +15,8 @@ import {
 } from "./icons";
 import { HeaderSetting } from "@prisma/client";
 import { useAppSelector } from "@/redux/store";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { signOutOnThisSite } from "@/lib/sign-out";
 import type { MenuItem } from "./types";
 
 type SiteSettings = {
@@ -216,7 +217,7 @@ const MainHeader = ({ headerData, siteName = "Shop", siteSettings, categories = 
                         <button
                           onClick={() => {
                             setUserMenuOpen(false);
-                            signOut();
+                            void signOutOnThisSite("/");
                           }}
                           className="block w-full px-4 py-2 text-left text-sm text-red hover:bg-red-light-6"
                         >

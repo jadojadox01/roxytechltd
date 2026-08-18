@@ -1,6 +1,6 @@
 "use client";
 
-import { signOut } from "next-auth/react";
+import { signOutOnThisSite } from "@/lib/sign-out";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -76,7 +76,7 @@ export default function StoreKeeperSidebar({ siteName }: { siteName: string }) {
 
         <div className="mt-8 border-t border-amber-100 pt-4">
           <button
-            onClick={() => signOut({ callbackUrl: "/signin" })}
+            onClick={() => void signOutOnThisSite("/signin")}
             className="w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-100"
           >
             Sign out
