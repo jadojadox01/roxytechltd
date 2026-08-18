@@ -35,7 +35,11 @@ const Footer = async () => {
     { label: "Privacy Policy", href: "/privacy-policy" },
   ];
 
-  const paymentBadges = ["MTN MoMo", "Airtel", "Visa", "Mastercard"];
+  const paymentMethods = [
+    { src: "/images/payment/airtel-money.png", alt: "Airtel Money" },
+    { src: "/images/payment/bank-card.png", alt: "Bank cards" },
+    { src: "/images/payment/mobile-money.png", alt: "MTN Mobile Money" },
+  ];
 
   return (
     <footer className="bg-[#0f1e4a] px-4 pb-6 pt-12 text-white/70 sm:px-8 xl:px-0">
@@ -117,13 +121,17 @@ const Footer = async () => {
           <p className="text-[12.5px] text-white/55">
             © {year} {siteName} · All rights reserved · Kigali, Rwanda
           </p>
-          <div className="flex flex-wrap gap-2">
-            {paymentBadges.map((badge) => (
+          <div className="flex flex-wrap items-center gap-2.5">
+            {paymentMethods.map((method) => (
               <span
-                key={badge}
-                className="rounded-md bg-white/12 px-2.5 py-1 text-[11.5px] font-semibold text-white"
+                key={method.alt}
+                className="inline-flex h-11 items-center justify-center overflow-hidden rounded-md bg-white p-1 shadow-sm"
               >
-                {badge}
+                <img
+                  src={method.src}
+                  alt={method.alt}
+                  className="h-9 w-auto max-w-[72px] object-contain"
+                />
               </span>
             ))}
           </div>
