@@ -144,7 +144,7 @@ const CheckoutForm = ({ user, paymentSettings }: Props) => {
       } catch {
         // ignore
       }
-      setMessage("Order placed successfully. Thank you!");
+      setMessage("Order placed successfully. Check your email for confirmation.");
       router.push("/track-order");
     } catch (error: unknown) {
       setMessage(error instanceof Error ? error.message : "Something went wrong.");

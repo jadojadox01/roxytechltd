@@ -32,7 +32,7 @@ export function getAppBaseUrl() {
 }
 
 function storeName() {
-  return process.env.SITE_NAME?.trim() || "NAALVA STORE";
+  return process.env.SITE_NAME?.trim() || "Roxin.rw";
 }
 
 export async function createPasswordResetForEmail(emailRaw: string) {
@@ -68,7 +68,7 @@ export async function createPasswordResetForEmail(emailRaw: string) {
   });
 
   if (!isMailConfigured()) {
-    console.warn("[password-reset] SMTP not configured — reset email skipped");
+    console.warn("[password-reset] Resend is not configured — reset email skipped");
     return { ok: true as const, sent: false as const, missingMail: true as const };
   }
 
@@ -90,12 +90,12 @@ export async function createPasswordResetForEmail(emailRaw: string) {
   const html = `<!DOCTYPE html>
 <html><body style="font-family:Arial,Helvetica,sans-serif;color:#0f172a;background:#f8fafc;padding:24px;">
   <table role="presentation" width="100%" style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;">
-    <tr><td style="background:#02AAA4;color:#fff;padding:18px 24px;font-size:18px;font-weight:bold;">${storeName()}</td></tr>
+    <tr><td style="background:#1c2ea3;color:#fff;padding:18px 24px;font-size:18px;font-weight:bold;">${storeName()}</td></tr>
     <tr><td style="padding:24px;font-size:14px;line-height:1.6;">
       <p>Hi <strong>${name}</strong>,</p>
       <p>We received a request to reset your password.</p>
       <p style="margin:24px 0;">
-        <a href="${resetUrl}" style="display:inline-block;background:#02AAA4;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold;">
+        <a href="${resetUrl}" style="display:inline-block;background:#ff7a1a;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold;">
           Reset password
         </a>
       </p>

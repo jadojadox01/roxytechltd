@@ -11,7 +11,7 @@ function money(value: number) {
 }
 
 function storeName() {
-  return process.env.SITE_NAME?.trim() || "NAALVA STORE";
+  return process.env.SITE_NAME?.trim() || "Roxin.rw";
 }
 
 function formatItems(order: ReceiptOrder) {
@@ -30,7 +30,7 @@ function htmlShell(title: string, body: string) {
         <td align="center">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
             <tr>
-              <td style="background:#02AAA4;color:#ffffff;padding:18px 24px;font-size:18px;font-weight:bold;">
+              <td style="background:#1c2ea3;color:#ffffff;padding:18px 24px;font-size:18px;font-weight:bold;">
                 ${storeName()}
               </td>
             </tr>
@@ -74,7 +74,7 @@ export async function getAdminEmails() {
 
 export async function notifyOrderPlaced(orderInput: ReceiptOrder) {
   if (!isMailConfigured()) {
-    console.warn("[order-email] SMTP not configured — order placed emails skipped");
+    console.warn("[order-email] Resend is not configured — order placed emails skipped");
     return;
   }
 
@@ -167,7 +167,7 @@ export async function notifyOrderPlaced(orderInput: ReceiptOrder) {
 
 export async function notifyOrderConfirmed(orderInput: ReceiptOrder) {
   if (!isMailConfigured()) {
-    console.warn("[order-email] SMTP not configured — confirmation emails skipped");
+    console.warn("[order-email] Resend is not configured — confirmation emails skipped");
     return;
   }
 

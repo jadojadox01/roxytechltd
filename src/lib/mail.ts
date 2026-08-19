@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 export type MailAttachment = {
   filename: string;
@@ -16,69 +16,46 @@ export type SendMailInput = {
 };
 
 function getFromAddress() {
-  const from = process.env.EMAIL_FROM?.trim();
-  const user = process.env.EMAIL_USER?.trim();
-  const siteName = process.env.SITE_NAME?.trim() || "NAALVA STORE";
-
+  const from = process.env.EMAIL_FROM?.trim() || process.env.RESEND_FROM?.trim();
+  const siteName = process.env.SITE_NAME?.trim() || "Roxin.rw";
   if (from) return from;
-  if (user) return `"${siteName}" <${user}>`;
-  return `"${siteName}" <noreply@naalvastore.vercel.app>`;
+  return `${siteName} <beth.t@example.com>`;
 }
 
 export function isMailConfigured() {
-  return Boolean(
-    process.env.EMAIL_HOST &&
-      process.env.EMAIL_USER &&
-      process.env.EMAIL_PASSWORD
-  );
-}
-
-function createTransport() {
-  const host = process.env.EMAIL_HOST;
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASSWORD;
-  const port = Number(process.env.EMAIL_PORT || 465);
-  const secure =
-    process.env.EMAIL_SECURE === "false" ? false : port === 465;
-
-  if (!host || !user || !pass) {
-    throw new Error("Email is not configured. Set EMAIL_HOST, EMAIL_USER, and EMAIL_PASSWORD.");
-  }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: { user, pass },
-  });
+  return Boolean(process.env.RESEND_API_KEY?.trim());
 }
 
 export async function sendMail(input: SendMailInput) {
-  if (!isMailConfigured()) {
-    console.warn("[mail] Skipped send — SMTP env vars missing");
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) {
+    console.warn("[mail] Skipped send — RESEND_API_KEY is missing");
     return { skipped: true as const };
   }
 
-  const transporter = createTransport();
-  const to = Array.isArray(input.to) ? input.to.join(", ") : input.to;
+  const resend = new Resend(apiKey);
+  const to = Array.isArray(input.to) ? input.to : [input.to];
+  const replyTo = input.replyTo || process.env.EMAIL_REPLY_TO || undefined;
 
-  await transporter.sendMail({
+  const { data, error } = await resend.emails.send({
     from: getFromAddress(),
     to,
     subject: input.subject,
     text: input.text,
     html: input.html,
-    replyTo: input.replyTo || process.env.EMAIL_REPLY_TO || process.env.EMAIL_USER,
+    replyTo,
     attachments: input.attachments?.map((file) => ({
       filename: file.filename,
       content: file.content,
       contentType: file.contentType || "application/pdf",
     })),
-    headers: {
-      "X-Entity-Ref-ID": `${Date.now()}`,
-      "X-Auto-Response-Suppress": "OOF, AutoReply",
-    },
   });
 
-  return { skipped: false as const };
+  if (error) {
+    console.error("[mail] Resend failed:", error);
+    throw new Error(error.message || "Failed to send email");
+  }
+
+  console.info("[mail] Sent via Resend", data?.id || "");
+  return { skipped: false as const, id: data?.id };
 }

@@ -220,22 +220,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    void notifyOrderPlaced({
-      id: order.id,
-      createdAt: order.createdAt,
-      status: order.status,
-      paymentMethod: order.paymentMethod,
-      totalPrice: Number(order.totalPrice),
-      shippingName: order.shippingName,
-      shippingEmail: order.shippingEmail,
-      shippingPhone: order.shippingPhone,
-      shippingAddress: order.shippingAddress,
-      items: order.items.map((item) => ({
-        productTitle: item.productTitle,
-        quantity: item.quantity,
-        price: Number(item.price),
-      })),
-    }).catch((err) => console.error("[order-email] place failed", err));
+    try {
+      await notifyOrderPlaced({
+        id: order.id,
+        createdAt: order.createdAt,
+        status: order.status,
+        paymentMethod: order.paymentMethod,
+        totalPrice: Number(order.totalPrice),
+        shippingName: order.shippingName,
+        shippingEmail: order.shippingEmail,
+        shippingPhone: order.shippingPhone,
+        shippingAddress: order.shippingAddress,
+        items: order.items.map((item) => ({
+          productTitle: item.productTitle,
+          quantity: item.quantity,
+          price: Number(item.price),
+        })),
+      });
+    } catch (err) {
+      console.error("[order-email] place failed", err);
+    }
 
     return NextResponse.json({ success: true, order, discountAmount });
   } catch (error: unknown) {
