@@ -3,6 +3,8 @@ import { getSiteSettings } from "@/get-api-data/site-settings";
 import { getHeaderSettings } from "@/get-api-data/header-setting";
 import { getCategories } from "@/get-api-data/category";
 import { getSiteName } from "@/get-api-data/seo-setting";
+import FooterSupportLinks from "./FooterSupportLinks";
+
 function excerptAbout(text: string, max = 160) {
   const clean = text.replace(/\s+/g, " ").trim();
   if (clean.length <= max) return { preview: clean, truncated: false };
