@@ -30,7 +30,7 @@ export async function sendMail(input: SendMailInput) {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   if (!apiKey) {
     console.warn("[mail] Skipped send — RESEND_API_KEY is missing");
-    return { skipped: true as const };
+    throw new Error("Email is not configured");
   }
 
   const resend = new Resend(apiKey);
