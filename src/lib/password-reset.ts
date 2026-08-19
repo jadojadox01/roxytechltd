@@ -46,9 +46,8 @@ export async function createPasswordResetForEmail(emailRaw: string) {
     select: { id: true, name: true, email: true, status: true },
   });
 
-  // Always look successful to the client (don't leak whether email exists)
   if (!user || user.status === "FROZEN") {
-    return { ok: true as const, sent: false as const };
+    return { ok: false as const, reason: "not_found" as const };
   }
 
   const rawToken = createRawResetToken();
@@ -69,7 +68,7 @@ export async function createPasswordResetForEmail(emailRaw: string) {
 
   if (!isMailConfigured()) {
     console.warn("[password-reset] Resend is not configured — reset email skipped");
-    return { ok: true as const, sent: false as const, missingMail: true as const };
+    return { ok: false as const, reason: "mail_failed" as const };
   }
 
   const resetUrl = `${getAppBaseUrl()}/reset-password?token=${rawToken}`;
@@ -105,12 +104,17 @@ export async function createPasswordResetForEmail(emailRaw: string) {
   </table>
 </body></html>`;
 
-  await sendMail({
-    to: user.email,
-    subject: `${storeName()} password reset`,
-    text,
-    html,
-  });
+  try {
+    await sendMail({
+      to: user.email,
+      subject: `${storeName()} password reset`,
+      text,
+      html,
+    });
+  } catch (error) {
+    console.error("[password-reset] send failed", error);
+    return { ok: false as const, reason: "mail_failed" as const };
+  }
 
   return { ok: true as const, sent: true as const };
 }

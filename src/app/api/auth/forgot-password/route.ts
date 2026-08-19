@@ -17,19 +17,37 @@ export async function POST(request: Request) {
 
     const result = await createPasswordResetForEmail(email);
 
-    if (result.ok && "missingMail" in result && result.missingMail) {
+    if (!result.ok && result.reason === "not_found") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "This email is not registered. Please check it or create an account.",
+        },
+        { status: 404 }
+      );
+    }
+
+    if (!result.ok && result.reason === "mail_failed") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "We could not send the reset email. Please try again in a moment.",
+        },
+        { status: 503 }
+      );
+    }
+
+    if (result.ok && result.sent) {
       return NextResponse.json({
         success: true,
-        message:
-          "If an account exists for that email, a reset link will be sent. Email delivery is not configured on the server yet — contact the store admin.",
+        message: "A password reset link has been sent to your email. Check your inbox and spam folder.",
       });
     }
 
-    return NextResponse.json({
-      success: true,
-      message:
-        "If an account exists for that email, we sent a password reset link. Check your inbox and spam folder.",
-    });
+    return NextResponse.json(
+      { success: false, message: "Unable to send a reset link for this email." },
+      { status: 400 }
+    );
   } catch (error) {
     console.error("[forgot-password]", error);
     return NextResponse.json(
