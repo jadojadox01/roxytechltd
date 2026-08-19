@@ -57,6 +57,9 @@ export async function PUT(request: NextRequest) {
       heroEyebrow: body.heroEyebrow ?? null,
       heroTitle: body.heroTitle ?? null,
       heroSubtitle: body.heroSubtitle ?? null,
+      whatsappPhone: body.whatsappPhone
+        ? String(body.whatsappPhone).trim() || null
+        : null,
     });
 
     revalidateTag("site-settings", "max");

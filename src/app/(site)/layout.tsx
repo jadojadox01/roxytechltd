@@ -10,6 +10,7 @@ import { getSiteSettings } from "@/get-api-data/site-settings";
 import { getCategories } from "@/get-api-data/category";
 import { getSiteName } from "@/get-api-data/seo-setting";
 import Breadcrumb from "@/components/Common/Breadcrumb";
+import WhatsAppFloat from "@/components/Common/WhatsAppFloat";
 
 export default async function SiteLayout({
   children,
@@ -52,6 +53,9 @@ export default async function SiteLayout({
           <Footer />
         </Providers>
 
+        <WhatsAppFloat
+          phone={siteSettings?.whatsappPhone || siteSettings?.contactPhone || siteSettings?.momoPhone}
+        />
         <ScrollToTop />
       </>
     </div>

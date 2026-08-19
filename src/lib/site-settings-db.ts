@@ -26,6 +26,7 @@ export type SiteSettingsRow = {
   heroEyebrow: string | null;
   heroTitle: string | null;
   heroSubtitle: string | null;
+  whatsappPhone: string | null;
 };
 
 let schemaReady: Promise<void> | null = null;
@@ -44,6 +45,8 @@ export function ensureSiteSettingSchema() {
         `ALTER TABLE "SiteSetting" ADD COLUMN IF NOT EXISTS "heroEyebrow" TEXT DEFAULT 'New collection'`,
         `ALTER TABLE "SiteSetting" ADD COLUMN IF NOT EXISTS "heroTitle" TEXT DEFAULT '${DEFAULT_HERO_TITLE.replace(/'/g, "''")}'`,
         `ALTER TABLE "SiteSetting" ADD COLUMN IF NOT EXISTS "heroSubtitle" TEXT DEFAULT '${DEFAULT_HERO_SUBTITLE.replace(/'/g, "''")}'`,
+        `ALTER TABLE "SiteSetting" ADD COLUMN IF NOT EXISTS "whatsappPhone" TEXT`,
+        `UPDATE "SiteSetting" SET "whatsappPhone" = COALESCE("whatsappPhone", "contactPhone", "momoPhone", '0783428632') WHERE "whatsappPhone" IS NULL`,
         `ALTER TABLE "HeroSlider" ALTER COLUMN "productId" DROP NOT NULL`,
       ];
       for (const sql of statements) {
@@ -69,7 +72,7 @@ export async function getOrCreateSiteSettings(): Promise<SiteSettingsRow> {
             "facebookUrl", "twitterUrl", "instagramUrl", "linkedinUrl", currency,
             "momoPhone", "momoAccountName", "momoEnabled", "bankCardsEnabled",
             "bankCardsMessage", "codEnabled",
-            "heroEyebrow", "heroTitle", "heroSubtitle"
+            "heroEyebrow", "heroTitle", "heroSubtitle", "whatsappPhone"
      FROM "SiteSetting"
      ORDER BY "createdAt" ASC
      LIMIT 1`
@@ -86,7 +89,7 @@ export async function getOrCreateSiteSettings(): Promise<SiteSettingsRow> {
        "facebookUrl", "twitterUrl", "instagramUrl", "linkedinUrl", currency,
        "momoPhone", "momoAccountName", "momoEnabled", "bankCardsEnabled",
        "bankCardsMessage", "codEnabled",
-       "heroEyebrow", "heroTitle", "heroSubtitle"`,
+       "heroEyebrow", "heroTitle", "heroSubtitle", "whatsappPhone"`,
     DEFAULT_HERO_TITLE,
     DEFAULT_HERO_SUBTITLE
   );
@@ -122,8 +125,9 @@ export async function updateSiteSettings(
       "heroEyebrow" = $18,
       "heroTitle" = $19,
       "heroSubtitle" = $20,
+      "whatsappPhone" = $21,
       "updatedAt" = NOW()
-     WHERE id = $21`,
+     WHERE id = $22`,
     data.about ?? null,
     data.mission ?? null,
     data.vision ?? null,
@@ -144,6 +148,7 @@ export async function updateSiteSettings(
     data.heroEyebrow ?? "New collection",
     data.heroTitle ?? DEFAULT_HERO_TITLE,
     data.heroSubtitle ?? DEFAULT_HERO_SUBTITLE,
+    data.whatsappPhone ?? null,
     id
   );
 

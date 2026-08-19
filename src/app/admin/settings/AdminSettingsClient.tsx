@@ -23,6 +23,7 @@ type SiteSettings = {
   bankCardsEnabled: boolean;
   bankCardsMessage: string | null;
   codEnabled: boolean;
+  whatsappPhone: string | null;
 };
 
 type HeaderSettings = {
@@ -60,6 +61,7 @@ export default function AdminSettingsClient() {
     bankCardsEnabled: false,
     bankCardsMessage: "Coming soon",
     codEnabled: true,
+    whatsappPhone: "0783428632",
   });
 
   // ── Header / branding settings ──────────────────────────────────
@@ -115,6 +117,7 @@ export default function AdminSettingsClient() {
           bankCardsEnabled: data.settings.bankCardsEnabled === true,
           bankCardsMessage: data.settings.bankCardsMessage || "Coming soon",
           codEnabled: data.settings.codEnabled !== false,
+          whatsappPhone: data.settings.whatsappPhone || data.settings.contactPhone || data.settings.momoPhone || "0783428632",
         });
       }
     } catch (err: unknown) {
@@ -389,6 +392,18 @@ export default function AdminSettingsClient() {
                 onChange={(e) => setForm({ ...form, contactPhone: e.target.value })}
                 className={inputClass}
               />
+            </div>
+            <div>
+              <label className={labelClass}>WhatsApp number</label>
+              <input
+                value={form.whatsappPhone}
+                onChange={(e) => setForm({ ...form, whatsappPhone: e.target.value })}
+                placeholder="0783428632"
+                className={inputClass}
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Used by the floating WhatsApp chat button.
+              </p>
             </div>
             <div>
               <label className={labelClass}>Email</label>

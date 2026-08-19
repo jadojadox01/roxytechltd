@@ -33,6 +33,7 @@ export const getSiteSettings = unstable_cache(
         heroEyebrow: "New collection",
         heroTitle: DEFAULT_HERO_TITLE,
         heroSubtitle: DEFAULT_HERO_SUBTITLE,
+        whatsappPhone: "0783428632",
       };
     }
   },

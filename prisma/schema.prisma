@@ -412,6 +412,7 @@ model SiteSetting {
   heroEyebrow    String?  @default("New collection")
   heroTitle      String?  @default("Elevate Your Shopping Journey")
   heroSubtitle   String?  @default("Premium stationery, school & office materials — everything you need, all in one shop. Fast delivery across Rwanda.")
+  whatsappPhone  String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
