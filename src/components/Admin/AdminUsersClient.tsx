@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
+import { isProtectedSuperAdmin } from "@/lib/protected-admin";
 
 type User = {
   id: string;
@@ -81,7 +82,14 @@ export default function AdminUsersClient() {
     }
   };
 
-  const roleBadge = (role: string) => {
+  const roleBadge = (role: string, email: string) => {
+    if (isProtectedSuperAdmin(email)) {
+      return (
+        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+          Super Admin
+        </span>
+      );
+    }
     const colors: Record<string, string> = {
       ADMIN: "bg-purple-100 text-purple-700",
       STORE_KEEPER: "bg-blue-100 text-blue-700",
@@ -181,7 +189,7 @@ export default function AdminUsersClient() {
                 </td>
                 <td className="px-4 py-3">
                   {user.role === "ADMIN" ? (
-                    roleBadge(user.role)
+                    roleBadge(user.role, user.email)
                   ) : (
                     <select
                       value={user.role}

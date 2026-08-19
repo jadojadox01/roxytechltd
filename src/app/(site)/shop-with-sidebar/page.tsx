@@ -25,7 +25,7 @@ export default async function ShopWithSidebarPage() {
           </p>
           <h1 className="mt-4 text-3xl font-black sm:text-4xl">Shop Products</h1>
           <p className="mt-2 text-sm text-white/85">
-            Browse products using categories and filters. Scroll to load more.
+            Browse products using categories and filters.
           </p>
         </div>
 

@@ -1,6 +1,7 @@
 import { prismaClientInstance } from "@/lib/prismaDB";
 import { isMailConfigured, sendMail } from "@/lib/mail";
 import { buildOrderReceiptPdf, type ReceiptOrder } from "@/lib/order-receipt-pdf";
+import { ORDER_NOTIFY_EMAIL, normalizeEmail } from "@/lib/protected-admin";
 
 type OrderEmailPayload = ReceiptOrder & {
   shortId: string;
@@ -65,11 +66,19 @@ function toPayload(order: ReceiptOrder): OrderEmailPayload {
 }
 
 export async function getAdminEmails() {
+  const extra = (process.env.ORDER_NOTIFY_EMAIL || ORDER_NOTIFY_EMAIL)
+    .split(",")
+    .map((email) => normalizeEmail(email))
+    .filter(Boolean);
+
   const admins = await prismaClientInstance.user.findMany({
     where: { role: "ADMIN", status: "ACTIVE" },
     select: { email: true },
   });
-  return admins.map((a) => a.email).filter(Boolean);
+
+  return Array.from(
+    new Set([...extra, ...admins.map((a) => normalizeEmail(a.email)).filter(Boolean)])
+  );
 }
 
 export async function notifyOrderPlaced(orderInput: ReceiptOrder) {
@@ -117,51 +126,64 @@ export async function notifyOrderPlaced(orderInput: ReceiptOrder) {
     `
   );
 
-  await sendMail({
-    to: order.shippingEmail,
-    subject: `${storeName()} order received #${order.shortId}`,
-    text: customerText,
-    html: customerHtml,
-  });
-
-  if (adminEmails.length) {
-    const adminText = [
-      `New order placed on ${storeName()}.`,
-      `Order: #${order.shortId}`,
-      `Customer: ${order.shippingName} <${order.shippingEmail}>`,
-      `Phone: ${order.shippingPhone}`,
-      `Payment: ${order.paymentMethod}`,
-      `Total: ${money(order.totalPrice)}`,
-      "",
-      "Items:",
-      itemsText,
-      "",
-      `Address: ${order.shippingAddress}`,
-    ].join("\n");
-
-    const adminHtml = htmlShell(
-      `New order #${order.shortId}`,
-      `
-        <p>A new order was placed.</p>
-        <p>
-          <strong>Order:</strong> #${order.shortId}<br/>
-          <strong>Customer:</strong> ${order.shippingName} (${order.shippingEmail})<br/>
-          <strong>Phone:</strong> ${order.shippingPhone}<br/>
-          <strong>Payment:</strong> ${order.paymentMethod}<br/>
-          <strong>Total:</strong> ${money(order.totalPrice)}
-        </p>
-        <p><strong>Items</strong></p>
-        <pre style="white-space:pre-wrap;font-family:Arial,sans-serif;">${itemsText}</pre>
-        <p><strong>Address:</strong> ${order.shippingAddress}</p>
-      `
-    );
-
+  try {
     await sendMail({
-      to: adminEmails,
+      to: order.shippingEmail,
+      subject: `${storeName()} order received #${order.shortId}`,
+      text: customerText,
+      html: customerHtml,
+    });
+  } catch (err) {
+    console.error("[order-email] customer copy failed:", err);
+  }
+
+  if (!adminEmails.length) return;
+
+  const storeEmails = adminEmails.filter(
+    (email) => normalizeEmail(email) !== normalizeEmail(order.shippingEmail)
+  );
+  if (!storeEmails.length) return;
+
+  const adminText = [
+    `New order placed on ${storeName()}.`,
+    `Order: #${order.shortId}`,
+    `Customer: ${order.shippingName} <${order.shippingEmail}>`,
+    `Phone: ${order.shippingPhone}`,
+    `Payment: ${order.paymentMethod}`,
+    `Total: ${money(order.totalPrice)}`,
+    "",
+    "Items:",
+    itemsText,
+    "",
+    `Address: ${order.shippingAddress}`,
+  ].join("\n");
+
+  const adminHtml = htmlShell(
+    `New order #${order.shortId}`,
+    `
+      <p>A customer has placed an order.</p>
+      <p>
+        <strong>Order:</strong> #${order.shortId}<br/>
+        <strong>Customer:</strong> ${order.shippingName} (${order.shippingEmail})<br/>
+        <strong>Phone:</strong> ${order.shippingPhone}<br/>
+        <strong>Payment:</strong> ${order.paymentMethod}<br/>
+        <strong>Total:</strong> ${money(order.totalPrice)}
+      </p>
+      <p><strong>Items</strong></p>
+      <pre style="white-space:pre-wrap;font-family:Arial,sans-serif;">${itemsText}</pre>
+      <p><strong>Address:</strong> ${order.shippingAddress}</p>
+    `
+  );
+
+  try {
+    await sendMail({
+      to: storeEmails,
       subject: `${storeName()} new order #${order.shortId}`,
       text: adminText,
       html: adminHtml,
     });
+  } catch (err) {
+    console.error("[order-email] store copy failed:", err);
   }
 }
 

@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import dayjs from "dayjs";
 import { signOutOnThisSite } from "@/lib/sign-out";
 import Link from "next/link";
+import { isProtectedSuperAdmin } from "@/lib/protected-admin";
 
 type User = {
   id: string;
@@ -164,7 +165,14 @@ export default function SystemUsersConsole() {
     }
   };
 
-  const roleBadge = (role: string) => {
+  const roleBadge = (role: string, email: string) => {
+    if (isProtectedSuperAdmin(email)) {
+      return (
+        <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-xs font-medium text-amber-200">
+          Super Admin
+        </span>
+      );
+    }
     const colors: Record<string, string> = {
       ADMIN: "bg-violet-500/20 text-violet-200",
       STORE_KEEPER: "bg-sky-500/20 text-sky-200",
@@ -303,7 +311,9 @@ export default function SystemUsersConsole() {
                     </td>
                     <td className="px-4 py-3 text-slate-300">{user.email}</td>
                     <td className="px-4 py-3">
-                      {resetUserId === user.id ? (
+                      {isProtectedSuperAdmin(user.email) ? (
+                        <span className="text-xs text-slate-500">Protected</span>
+                      ) : resetUserId === user.id ? (
                         <div className="flex min-w-[220px] items-center gap-2">
                           <input
                             type="password"
@@ -350,7 +360,7 @@ export default function SystemUsersConsole() {
                     </td>
                     <td className="px-4 py-3">
                       {user.role === "ADMIN" ? (
-                        roleBadge(user.role)
+                        roleBadge(user.role, user.email)
                       ) : (
                         <select
                           value={user.role}
@@ -380,7 +390,7 @@ export default function SystemUsersConsole() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">
-                        {user.role !== "ADMIN" && (
+                        {user.role !== "ADMIN" && !isProtectedSuperAdmin(user.email) && (
                           <>
                             <button
                               type="button"

@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import PasswordInput from "@/components/Common/PasswordInput";
 
 export default function ResetPasswordPage() {
   return (
@@ -100,27 +101,29 @@ function ResetPasswordForm() {
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div>
             <label className="block text-sm font-medium text-slate-700">New password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              autoComplete="new-password"
-              className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-slate-500 focus:outline-none"
-            />
+            <div className="mt-2">
+              <PasswordInput
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                autoComplete="new-password"
+                className="rounded-lg border border-slate-300 px-4 py-3 focus:border-slate-500 focus:outline-none"
+              />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700">Confirm password</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              minLength={6}
-              autoComplete="new-password"
-              className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-slate-500 focus:outline-none"
-            />
+            <div className="mt-2">
+              <PasswordInput
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+                autoComplete="new-password"
+                className="rounded-lg border border-slate-300 px-4 py-3 focus:border-slate-500 focus:outline-none"
+              />
+            </div>
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}

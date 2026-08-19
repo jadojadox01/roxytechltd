@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import PasswordInput from "@/components/Common/PasswordInput";
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
@@ -76,23 +77,27 @@ export default function SignUpPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-slate-500 focus:outline-none"
-            />
+            <div className="mt-2">
+              <PasswordInput
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="new-password"
+                className="rounded-lg border border-slate-300 px-4 py-3 focus:border-slate-500 focus:outline-none"
+              />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700">Confirm Password</label>
-            <input
-              type="password"
-              value={passwordConfirm}
-              onChange={(e) => setPasswordConfirm(e.target.value)}
-              required
-              className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-slate-500 focus:outline-none"
-            />
+            <div className="mt-2">
+              <PasswordInput
+                value={passwordConfirm}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+                required
+                autoComplete="new-password"
+                className="rounded-lg border border-slate-300 px-4 py-3 focus:border-slate-500 focus:outline-none"
+              />
+            </div>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           {success && <p className="text-sm text-green-600">{success}</p>}

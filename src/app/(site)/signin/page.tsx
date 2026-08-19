@@ -3,6 +3,7 @@
 import React, { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
+import PasswordInput from "@/components/Common/PasswordInput";
 
 function getRedirectPath(role?: string | null, callbackUrl?: string | null) {
   if (callbackUrl && callbackUrl.startsWith("/") && !callbackUrl.startsWith("//")) {
@@ -109,13 +110,15 @@ function SignInForm() {
               <label className="block text-sm font-medium text-slate-700">Password</label>
               <a href="/forgot-password" className="text-sm text-slate-500 hover:text-slate-700">Forgot?</a>
             </div>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="mt-2 w-full rounded-lg border border-[#eadbcf] bg-[#fcf7f2] px-4 py-3 focus:border-[#ff7a1a] focus:outline-none"
-            />
+            <div className="mt-2">
+              <PasswordInput
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className="rounded-lg border border-[#eadbcf] bg-[#fcf7f2] px-4 py-3 focus:border-[#ff7a1a] focus:outline-none"
+              />
+            </div>
           </div>
 
           <div className="flex items-center gap-3">

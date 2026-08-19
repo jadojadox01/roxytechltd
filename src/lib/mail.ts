@@ -25,11 +25,40 @@ function envValue(...names: string[]) {
   return "";
 }
 
+const UNVERIFIED_FROM_DOMAINS = new Set([
+  "gmail.com",
+  "googlemail.com",
+  "yahoo.com",
+  "yahoo.co.uk",
+  "hotmail.com",
+  "outlook.com",
+  "live.com",
+  "icloud.com",
+  "aol.com",
+  "proton.me",
+  "protonmail.com",
+]);
+
+function fromDomain(address: string) {
+  const match = address.match(/@([^>\s]+)/i);
+  return match?.[1]?.toLowerCase() || "";
+}
+
 function getFromAddress() {
-  const from = envValue("EMAIL_FROM", "RESEND_FROM");
   const siteName = envValue("SITE_NAME") || "Roxin.rw";
-  if (from) return from;
-  return `${siteName} <beth.t@example.com>`;
+  const fallback = `${siteName} <beth.t@example.com>`;
+  const from = envValue("EMAIL_FROM", "RESEND_FROM");
+  if (!from) return fallback;
+
+  const domain = fromDomain(from);
+  if (UNVERIFIED_FROM_DOMAINS.has(domain)) {
+    console.warn(
+      `[mail] EMAIL_FROM uses @${domain}, which Resend cannot send from. Using beth.t@example.com instead. Verify roxin.rw at https://resend.com/domains then set EMAIL_FROM to Roxin.rw <noreply@roxin.rw>.`
+    );
+    return fallback;
+  }
+
+  return from;
 }
 
 export function isMailConfigured() {

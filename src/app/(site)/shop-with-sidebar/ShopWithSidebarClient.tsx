@@ -44,7 +44,6 @@ export default function ShopWithSidebarClient({
   const [selectedPriceRange, setSelectedPriceRange] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>("latest");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [total, setTotal] = useState(initialTotal);
 
   const priceRange = PRICE_RANGES.find((r) => r.label === selectedPriceRange);
 
@@ -111,9 +110,6 @@ export default function ShopWithSidebarClient({
                     }`}
                   >
                     {cat.title}
-                    <span className="ml-2 text-xs text-slate-400">
-                      ({cat.productCount ?? 0})
-                    </span>
                   </button>
                 </li>
               ))}
@@ -156,11 +152,7 @@ export default function ShopWithSidebarClient({
       </aside>
 
       <div className="flex-1">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e8ecff] bg-white px-4 py-3 shadow-sm">
-          <p className="text-sm text-slate-600">
-            <span className="font-semibold text-slate-900">{total}</span> products
-            <span className="ml-1 text-slate-400">· scroll to load more</span>
-          </p>
+        <div className="mb-6 flex flex-wrap items-center justify-end gap-3 rounded-xl border border-[#e8ecff] bg-white px-4 py-3 shadow-sm">
           <div className="flex items-center gap-2">
             <label htmlFor="sort" className="text-sm text-slate-600">
               Sort by:
@@ -189,7 +181,6 @@ export default function ShopWithSidebarClient({
           query={query}
           wrapItem
           gridClassName="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3"
-          onTotalChange={setTotal}
           emptyTitle="No products found"
           emptyDescription="Try adjusting your filters to find what you're looking for."
         />

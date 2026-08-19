@@ -3,6 +3,7 @@ import { hash } from "bcrypt";
 import { prismaClientInstance } from "@/lib/prismaDB";
 import { requireAdmin } from "@/lib/rbac";
 import { logActivity, getRequestMeta } from "@/lib/activity-log";
+import { isProtectedSuperAdmin, normalizeEmail } from "@/lib/protected-admin";
 
 export async function GET() {
   const { session, error } = await requireAdmin();
@@ -47,7 +48,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Invalid role" }, { status: 400 });
     }
 
-    const existing = await prismaClientInstance.user.findUnique({ where: { email } });
+    const existing = await prismaClientInstance.user.findUnique({
+      where: { email: normalizeEmail(email) },
+    });
     if (existing) {
       return NextResponse.json({ success: false, message: "Email already in use" }, { status: 409 });
     }
@@ -56,7 +59,7 @@ export async function POST(req: NextRequest) {
     const user = await prismaClientInstance.user.create({
       data: {
         name: name || null,
-        email,
+        email: normalizeEmail(email),
         password: hashedPassword,
         role: role || "USER",
       },
@@ -99,6 +102,27 @@ export async function PATCH(req: NextRequest) {
     const existing = await prismaClientInstance.user.findUnique({ where: { id: userId } });
     if (!existing) {
       return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+    }
+
+    if (isProtectedSuperAdmin(existing.email)) {
+      if (session!.user.id !== existing.id) {
+        return NextResponse.json(
+          { success: false, message: "This super admin cannot be changed by other admins." },
+          { status: 403 }
+        );
+      }
+      if (role !== undefined && role !== "ADMIN") {
+        return NextResponse.json(
+          { success: false, message: "This super admin role cannot be changed." },
+          { status: 403 }
+        );
+      }
+      if (status !== undefined && status !== "ACTIVE") {
+        return NextResponse.json(
+          { success: false, message: "This super admin cannot be disabled." },
+          { status: 403 }
+        );
+      }
     }
 
     const updateData: Record<string, unknown> = {};
@@ -160,6 +184,13 @@ export async function DELETE(req: NextRequest) {
     const existing = await prismaClientInstance.user.findUnique({ where: { id: userId } });
     if (!existing) {
       return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+    }
+
+    if (isProtectedSuperAdmin(existing.email)) {
+      return NextResponse.json(
+        { success: false, message: "This super admin cannot be deleted." },
+        { status: 403 }
+      );
     }
 
     await prismaClientInstance.user.delete({ where: { id: userId } });

@@ -58,7 +58,6 @@ export default function InfiniteProductGrid({
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [total, setTotal] = useState(initialTotal);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const loadingRef = useRef(false);
   const queryKey = JSON.stringify(query || {});
@@ -79,7 +78,6 @@ export default function InfiniteProductGrid({
         setProducts((prev) => (replace ? nextProducts : [...prev, ...nextProducts]));
         setHasMore(Boolean(data.hasMore));
         setPage(nextPage);
-        setTotal(Number(data.total) || 0);
         onTotalChange?.(Number(data.total) || 0);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load products");
@@ -96,7 +94,6 @@ export default function InfiniteProductGrid({
     setProducts(initialProducts);
     setPage(1);
     setHasMore(initialHasMore);
-    setTotal(initialTotal);
     // If we have no SSR batch for this query, fetch page 1
     if (initialProducts.length === 0) {
       void loadPage(1, true);
@@ -155,14 +152,6 @@ export default function InfiniteProductGrid({
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-[#1c2ea3]" />
             Loading products...
           </div>
-        ) : null}
-        {!loading && hasMore ? (
-          <p className="text-xs text-slate-400">Scroll to load more</p>
-        ) : null}
-        {!loading && !hasMore && products.length > 0 ? (
-          <p className="text-xs text-slate-400">
-            You&apos;ve seen all {total || products.length} products
-          </p>
         ) : null}
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
       </div>

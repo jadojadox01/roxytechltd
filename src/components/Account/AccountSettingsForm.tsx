@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
+import PasswordInput from "@/components/Common/PasswordInput";
 
 type Theme = "admin" | "storekeeper" | "user";
 
@@ -249,9 +250,8 @@ export default function AccountSettingsForm({ theme }: { theme: Theme }) {
             <label htmlFor="profile-current-password" className={t.label}>
               Current password <span className="text-red-500">*</span>
             </label>
-            <input
+            <PasswordInput
               id="profile-current-password"
-              type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               className={t.input}
@@ -275,9 +275,8 @@ export default function AccountSettingsForm({ theme }: { theme: Theme }) {
             <label htmlFor="password-current" className={t.label}>
               Current password
             </label>
-            <input
+            <PasswordInput
               id="password-current"
-              type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               className={t.input}
@@ -289,9 +288,8 @@ export default function AccountSettingsForm({ theme }: { theme: Theme }) {
               <label htmlFor="password-new" className={t.label}>
                 New password
               </label>
-              <input
+              <PasswordInput
                 id="password-new"
-                type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className={t.input}
@@ -303,9 +301,8 @@ export default function AccountSettingsForm({ theme }: { theme: Theme }) {
               <label htmlFor="password-confirm" className={t.label}>
                 Confirm new password
               </label>
-              <input
+              <PasswordInput
                 id="password-confirm"
-                type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className={t.input}
