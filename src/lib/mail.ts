@@ -15,30 +15,43 @@ export type SendMailInput = {
   attachments?: MailAttachment[];
 };
 
+function envValue(...names: string[]) {
+  for (const name of names) {
+    const raw = process.env[name];
+    if (!raw) continue;
+    const value = raw.trim().replace(/^["']|["']$/g, "").trim();
+    if (value) return value;
+  }
+  return "";
+}
+
 function getFromAddress() {
-  const from = process.env.EMAIL_FROM?.trim() || process.env.RESEND_FROM?.trim();
-  const siteName = process.env.SITE_NAME?.trim() || "Roxin.rw";
+  const from = envValue("EMAIL_FROM", "RESEND_FROM");
+  const siteName = envValue("SITE_NAME") || "Roxin.rw";
   if (from) return from;
   return `${siteName} <beth.t@example.com>`;
 }
 
 export function isMailConfigured() {
-  return Boolean(process.env.RESEND_API_KEY?.trim());
+  return Boolean(envValue("RESEND_API_KEY", "RESEND_KEY"));
 }
 
 export async function sendMail(input: SendMailInput) {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const apiKey = envValue("RESEND_API_KEY", "RESEND_KEY");
   if (!apiKey) {
-    console.warn("[mail] Skipped send — RESEND_API_KEY is missing");
-    throw new Error("Email is not configured");
+    console.warn("[mail] RESEND_API_KEY is missing in this deployment");
+    throw new Error(
+      "RESEND_API_KEY is missing. Add it in Vercel → Settings → Environment Variables for Production, then Redeploy."
+    );
   }
 
   const resend = new Resend(apiKey);
   const to = Array.isArray(input.to) ? input.to : [input.to];
-  const replyTo = input.replyTo || process.env.EMAIL_REPLY_TO || undefined;
+  const replyTo = envValue("EMAIL_REPLY_TO") || undefined;
+  const from = getFromAddress();
 
   const { data, error } = await resend.emails.send({
-    from: getFromAddress(),
+    from,
     to,
     subject: input.subject,
     text: input.text,

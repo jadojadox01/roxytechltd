@@ -68,7 +68,12 @@ export async function createPasswordResetForEmail(emailRaw: string) {
 
   if (!isMailConfigured()) {
     console.warn("[password-reset] Resend is not configured — reset email skipped");
-    return { ok: false as const, reason: "mail_failed" as const };
+    return {
+      ok: false as const,
+      reason: "mail_failed" as const,
+      message:
+        "RESEND_API_KEY is missing. Add it in Vercel for Production, then Redeploy.",
+    };
   }
 
   const resetUrl = `${getAppBaseUrl()}/reset-password?token=${rawToken}`;
@@ -113,7 +118,11 @@ export async function createPasswordResetForEmail(emailRaw: string) {
     });
   } catch (error) {
     console.error("[password-reset] send failed", error);
-    return { ok: false as const, reason: "mail_failed" as const };
+    return {
+      ok: false as const,
+      reason: "mail_failed" as const,
+      message: error instanceof Error ? error.message : "We could not send the reset email.",
+    };
   }
 
   return { ok: true as const, sent: true as const };

@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "We could not send the reset email. Please try again in a moment.",
+          message: result.message || "We could not send the reset email. Please try again in a moment.",
         },
         { status: 503 }
       );
