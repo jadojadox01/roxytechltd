@@ -31,6 +31,7 @@ type HeaderSettings = {
   siteName: string | null;
   headerLogo: string | null;
   headerText: string | null;
+  favicon?: string | null;
 };
 
 const inputClass =
@@ -75,7 +76,11 @@ export default function AdminSettingsClient() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [removeLogo, setRemoveLogo] = useState(false);
+  const [faviconFile, setFaviconFile] = useState<File | null>(null);
+  const [faviconPreview, setFaviconPreview] = useState<string | null>(null);
+  const [removeFavicon, setRemoveFavicon] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const faviconInputRef = useRef<HTMLInputElement>(null);
 
   const parseJsonResponse = async (res: Response) => {
     const text = await res.text();
@@ -143,6 +148,7 @@ export default function AdminSettingsClient() {
           headerText: data.settings.headerText || "",
         });
         setLogoPreview(data.settings.headerLogo || null);
+        setFaviconPreview(data.settings.favicon || null);
       }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to load branding settings");
@@ -176,6 +182,25 @@ export default function AdminSettingsClient() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleFaviconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Shortcut icon must be under 2 MB");
+      return;
+    }
+    setFaviconFile(file);
+    setFaviconPreview(URL.createObjectURL(file));
+    setRemoveFavicon(false);
+  };
+
+  const handleRemoveFavicon = () => {
+    setFaviconFile(null);
+    setFaviconPreview(null);
+    setRemoveFavicon(true);
+    if (faviconInputRef.current) faviconInputRef.current.value = "";
+  };
+
   // ── Save branding ───────────────────────────────────────────────
   const handleSaveBranding = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,6 +215,8 @@ export default function AdminSettingsClient() {
       fd.append("headerText", brandingForm.headerText);
       if (logoFile) fd.append("headerLogo", logoFile);
       if (removeLogo) fd.append("removeLogo", "true");
+      if (faviconFile) fd.append("favicon", faviconFile);
+      if (removeFavicon) fd.append("removeFavicon", "true");
 
       const res = await fetch("/api/admin/header-settings", {
         method: "PUT",
@@ -200,7 +227,10 @@ export default function AdminSettingsClient() {
       setHeaderSettings(data.settings);
       setLogoFile(null);
       setRemoveLogo(false);
+      setFaviconFile(null);
+      setRemoveFavicon(false);
       if (data.settings.headerLogo) setLogoPreview(data.settings.headerLogo);
+      setFaviconPreview(data.settings.favicon || null);
       toast.success("Branding saved successfully");
       router.refresh();
     } catch (err: unknown) {
@@ -246,7 +276,7 @@ export default function AdminSettingsClient() {
         <div className="mb-5">
           <h2 className="text-lg font-semibold text-slate-900">Branding</h2>
           <p className="mt-0.5 text-sm text-slate-500">
-            Upload a logo or set a text name displayed in the navigation bar.
+            Upload a nav logo, browser shortcut icon, or set the store name.
           </p>
         </div>
 
@@ -314,6 +344,60 @@ export default function AdminSettingsClient() {
                 placeholder="e.g. Free delivery on orders over 100,000 RWF"
                 className={inputClass}
               />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+          <div>
+            <label className={labelClass}>Browser shortcut icon (favicon)</label>
+            <p className="mb-3 text-xs text-slate-500">
+              PNG, ICO, JPEG, WEBP · max 2 MB · recommended 32 × 32 or 64 × 64 px. Appears in the browser tab.
+            </p>
+
+            {faviconPreview && !removeFavicon ? (
+              <div className="mb-3 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-1">
+                  <img
+                    src={faviconPreview}
+                    alt="Favicon preview"
+                    className="h-8 w-8 object-contain"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemoveFavicon}
+                  className="text-xs font-medium text-red-600 hover:text-red-700 underline"
+                >
+                  Remove icon
+                </button>
+              </div>
+            ) : (
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-[10px] text-slate-400">
+                None
+              </div>
+            )}
+
+            <input
+              ref={faviconInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/x-icon,image/vnd.microsoft.icon,.ico"
+              onChange={handleFaviconChange}
+              className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-[#0071CE] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-[#005fb0]"
+            />
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-xs font-medium text-slate-500">Browser tab preview</p>
+            <div className="mt-3 flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm">
+              {faviconPreview && !removeFavicon ? (
+                <img src={faviconPreview} alt="" className="h-4 w-4 object-contain" />
+              ) : (
+                <span className="inline-block h-4 w-4 rounded-sm bg-slate-200" />
+              )}
+              <span className="truncate text-sm text-slate-700">
+                {brandingForm.siteName || "Your Store"} — Home
+              </span>
             </div>
           </div>
         </div>

@@ -22,25 +22,60 @@ async function syncSeoSiteName(siteName: string) {
   });
 }
 
-async function uploadLogo(file: File): Promise<string> {
-  const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
+async function upsertSeoFavicon(faviconUrl: string | null, remove: boolean) {
+  const seo = await prisma.seoSetting.findFirst();
+  if (!seo) {
+    if (remove || !faviconUrl) return null;
+    const created = await prisma.seoSetting.create({
+      data: { favicon: faviconUrl },
+    });
+    return created.favicon;
+  }
+
+  const updated = await prisma.seoSetting.update({
+    where: { id: seo.id },
+    data: remove ? { favicon: null } : faviconUrl ? { favicon: faviconUrl } : {},
+  });
+  return updated.favicon;
+}
+
+async function uploadBrandingImage(
+  file: File,
+  folder: string,
+  prefix: string,
+  label: string
+): Promise<string> {
+  const allowedTypes = [
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/webp",
+    "image/svg+xml",
+    "image/x-icon",
+    "image/vnd.microsoft.icon",
+  ];
   const type = (file.type || "").toLowerCase();
+  const name = (file.name || "").toLowerCase();
+  const isIco = name.endsWith(".ico");
   const isAllowedType =
-    !type || allowedTypes.includes(type) || type === "image/jpg";
+    !type || allowedTypes.includes(type) || type === "image/jpg" || isIco;
 
   if (!isAllowedType) {
-    throw new Error("Logo must be PNG, JPEG, WEBP, or SVG");
+    throw new Error(`${label} must be PNG, JPEG, WEBP, SVG, or ICO`);
   }
   if (file.size > 4 * 1024 * 1024) {
-    throw new Error("Logo must be under 4 MB");
+    throw new Error(`${label} must be under 4 MB`);
   }
 
   try {
-    return await uploadImageFile(file, "header", "logo");
+    return await uploadImageFile(file, folder, prefix);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Cloudinary upload failed";
-    // Surface a clearer branding error for the admin toast.
-    throw new Error(message.startsWith("Image upload failed:") ? message : `Cloudinary upload failed: ${message}`);
+    throw new Error(
+      message.startsWith("Image upload failed:")
+        ? message
+        : `Cloudinary upload failed: ${message}`
+    );
   }
 }
 
@@ -57,9 +92,16 @@ export async function GET() {
       });
     }
 
+    const seo = await prisma.seoSetting.findFirst({
+      select: { favicon: true },
+    });
+
     return NextResponse.json({
       success: true,
-      settings,
+      settings: {
+        ...settings,
+        favicon: seo?.favicon || null,
+      },
     });
   } catch (error: unknown) {
     console.error("GET HEADER SETTINGS ERROR:", error);
@@ -80,12 +122,19 @@ export async function PUT(request: NextRequest) {
     const siteName = formData.get("siteName")?.toString().trim() ?? "";
     const headerText = formData.get("headerText")?.toString().trim() ?? "";
     const removeLogo = formData.get("removeLogo")?.toString() === "true";
+    const removeFavicon = formData.get("removeFavicon")?.toString() === "true";
     const logo = formData.get("headerLogo");
+    const favicon = formData.get("favicon");
 
     let logoUrl: string | undefined;
+    let faviconUrl: string | undefined;
 
     if (logo instanceof File && logo.size > 0) {
-      logoUrl = await uploadLogo(logo);
+      logoUrl = await uploadBrandingImage(logo, "header", "logo", "Logo");
+    }
+
+    if (favicon instanceof File && favicon.size > 0) {
+      faviconUrl = await uploadBrandingImage(favicon, "seo", "favicon", "Shortcut icon");
     }
 
     let settings = await prisma.headerSetting.findFirst();
@@ -117,6 +166,14 @@ export async function PUT(request: NextRequest) {
       await syncSeoSiteName(siteName);
     }
 
+    let savedFavicon: string | null = null;
+    if (removeFavicon || faviconUrl) {
+      savedFavicon = await upsertSeoFavicon(faviconUrl || null, removeFavicon);
+    } else {
+      const seo = await prisma.seoSetting.findFirst({ select: { favicon: true } });
+      savedFavicon = seo?.favicon || null;
+    }
+
     revalidateTag("header-setting", "max");
     revalidateTag("header-logo", "max");
     revalidateTag("site-name", "max");
@@ -124,7 +181,10 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      settings,
+      settings: {
+        ...settings,
+        favicon: savedFavicon,
+      },
     });
   } catch (error: unknown) {
     console.error("HEADER SETTINGS UPDATE ERROR:", error);

@@ -29,7 +29,11 @@ export async function generateMetadata(): Promise<Metadata> {
       images: seoSettings?.metaImage ? [seoSettings.metaImage] : [],
     },
     icons: {
-      icon: seoSettings?.favicon || "/favicon.ico",
+      icon: [
+        {
+          url: seoSettings?.favicon || "/favicon.ico",
+        },
+      ],
       shortcut: seoSettings?.favicon || "/favicon.ico",
       apple: seoSettings?.favicon || "/favicon.ico",
     },
